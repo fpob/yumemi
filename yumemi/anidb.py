@@ -118,7 +118,8 @@ class Client:
         if isinstance(server, str):
             server_split = server.split(':')
             server = (server_split[0], int(server_split[1]))
-        self._socket = Socket(server, localport)
+        self._socket = Socket(server or self.SERVER,
+                              localport or self.LOCALPORT)
         self._session = session
 
     def __enter__(self):

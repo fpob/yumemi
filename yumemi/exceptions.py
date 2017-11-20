@@ -25,11 +25,11 @@ class AnidbApiError(AnidbError):
         return cls(str(response), response=response)
 
 
-class ServerError(AnidbError):
+class ServerError(AnidbApiError):
     """AniDB API error with code 6**."""
     pass
 
 
-class ClientError(AnidbError):
+class ClientError(AnidbApiError):
     """AniDB API error with code 5** and 4**."""
     pass

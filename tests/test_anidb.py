@@ -20,6 +20,36 @@ class SocketTestCase(unittest.TestCase):
         self.assertEqual(data, b'Hello World')
 
 
+class ClientSocketTestCase(unittest.TestCase):
+    @unittest.mock.patch('yumemi.anidb.socket.socket')
+    def test_init(self, *args):
+        c = Client()
+        self.assertEqual(c._socket.server, Client.SERVER)
+        c._socket._socket.bind.assert_called_once_with(('0.0.0.0', Client.LOCALPORT))
+        c._socket._socket.settimeout.assert_called_once()
+
+    @unittest.mock.patch('yumemi.anidb.socket.socket')
+    def test_init_none(self, *args):
+        c = Client(None, None, None)
+        self.assertEqual(c._socket.server, Client.SERVER)
+        c._socket._socket.bind.assert_called_once_with(('0.0.0.0', Client.LOCALPORT))
+        c._socket._socket.settimeout.assert_called_once()
+
+    @unittest.mock.patch('yumemi.anidb.socket.socket')
+    def test_send_recv(self, *args):
+        c = Client()
+        c._socket._socket.recv.return_value = b'200 OK'
+        resp = c.call('PING')
+        c._socket._socket.sendto.assert_called_with(b'PING', Client.SERVER)
+
+    @unittest.mock.patch('yumemi.anidb.socket.socket')
+    def test_send_recv_none(self, *args):
+        c = Client(None, None, None)
+        c._socket._socket.recv.return_value = b'200 OK'
+        resp = c.call('PING')
+        c._socket._socket.sendto.assert_called_with(b'PING', Client.SERVER)
+
+
 class ClientCallTestCase(unittest.TestCase):
     @unittest.mock.patch('yumemi.anidb.Socket')
     def test_empty_data(self, *args):
