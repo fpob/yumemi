@@ -14,9 +14,6 @@ setup(
     license='BSD',
     packages=['yumemi'],
     install_requires=['click'],
-    extras_require={
-        'xattr': ['xattr'],
-    },
     entry_points={
         'console_scripts': [
             'yumemi=yumemi.cli:main'
