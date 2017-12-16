@@ -6,6 +6,7 @@ import time
 import click
 
 from . import anidb
+from . import exceptions
 from . import ed2k
 
 
@@ -94,7 +95,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
     client = anidb.Client()
     try:
         client.auth(username, password)
-    except anidb.ClientError as e:
+    except exceptions.ClientError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
 
@@ -125,7 +126,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
 
             click.echo('[{}] {}: {}'.format(status, result.message,
                                             click.format_filename(file)))
-        except anidb.AnidbError as e:
+        except exceptions.AnidbError as e:
             click.echo('ERROR: {}'.format(str(e)), err=True)
             break
 
