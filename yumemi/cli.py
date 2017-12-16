@@ -99,7 +99,8 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
     try:
         client.auth(username, password)
     except anidb.ClientError as e:
-        raise click.ClickException(e) from e
+        click.echo('ERROR: {}'.format(str(e)), err=True)
+        return
 
     mp_pool = multiprocessing.Pool(jobs)
 
@@ -120,13 +121,16 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
             else:
                 status = click.style('FAIL', fg='red')
 
-            click.echo('[{}] {} {}'.format(status, result.message,
+            click.echo('[{}] {}: {}'.format(status, result.message,
                                            click.format_filename(file)))
         except anidb.AnidbError as e:
-            click.echo('ERROR {}'.format(str(e)), err=True)
+            click.echo('ERROR: {}'.format(str(e)), err=True)
+            break
 
     mp_pool.close()
     mp_pool.join()
+
+    client.logout()
 
 
 def main():
