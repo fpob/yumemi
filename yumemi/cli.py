@@ -42,8 +42,8 @@ class AnidbDate(click.ParamType):
         return None
 
     def convert(self, value, param, ctx):
-        if value is None:
-            return
+        if not value:
+            return 0
         date = self.from_str(value)
         if date is None:
             self.fail('Invalid value')
@@ -79,7 +79,7 @@ def mylistadd_file_params(file):
 @click.option('-p', '--password', prompt=True, hide_input=True)
 @click.option('-w', '--watched', is_flag=True, default=False,
               help='Mark files as watched.')
-@click.option('-W', '--view-date', type=UtcDate(), default='now',
+@click.option('-W', '--view-date', type=AnidbDate(), default=0,
               help='Set viewdate to certain date. Implies -w/--watched.')
 @click.option('-d', '--deleted', is_flag=True, default=False,
               help='Set file state to deleted.')
@@ -97,6 +97,12 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
     except anidb.ClientError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
+
+    if watched and not view_date:
+        view_date = AnidbDate.from_str('now')
+
+    if view_date:
+        watched = True
 
     mp_pool = multiprocessing.Pool(jobs)
 
@@ -118,7 +124,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
                 status = click.style('FAIL', fg='red')
 
             click.echo('[{}] {}: {}'.format(status, result.message,
-                                           click.format_filename(file)))
+                                            click.format_filename(file)))
         except anidb.AnidbError as e:
             click.echo('ERROR: {}'.format(str(e)), err=True)
             break
