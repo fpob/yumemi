@@ -9,36 +9,32 @@ from . import anidb
 from . import ed2k
 
 
-class UtcDate(click.ParamType):
+class AnidbDate(click.ParamType):
     """
     AniDB Date parameter.
 
     Converts local time to server (UTC) time.
     """
 
-    name = 'utc_date'
+    name = 'anidb_date'
 
     FROM_STR_DATE = (
-        (re.compile(r"^\d{4}-\d{2}-\d{2}$"),
-         "%Y-%m-%d"),
-        (re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$"),
-         "%Y-%m-%d %H:%M"),
-        (re.compile(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$"),
-         "%Y-%m-%d %H:%M:%S")
+        (re.compile(r'^\d{4}-\d{2}-\d{2}$'),
+         '%Y-%m-%d'),
+        (re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$'),
+         '%Y-%m-%d %H:%M'),
+        (re.compile(r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$'),
+         '%Y-%m-%d %H:%M:%S')
     )
 
     @classmethod
     def from_str(cls, date_time, _format=None):
-        """Create UTC timestamp from string.
-
-        Returns int or None if string cannot be parsed.
-        """
-        if date_time == "now":
-            return int(time.time())
+        """Create timestamp from string."""
+        if date_time == 'now':
+            return int(time.time()) + time.timezone
         elif _format:
-            # mktime vytvari timestamp v lokalni zone
             local_dt = time.mktime(time.strptime(date_time, _format))
-            return int(local_dt - time.timezone)
+            return int(local_dt - time.timezone) + time.timezone
         else:
             for cre, fmt in cls.FROM_STR_DATE:
                 if cre.match(date_time):
