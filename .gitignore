@@ -2,8 +2,10 @@ __pycache__
 *.pyc
 .cache
 tags
+run.py
 
 # distutils files
 /MANIFEST
 /build/
 /dist/
+/*.egg-info/
