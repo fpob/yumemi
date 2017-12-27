@@ -41,7 +41,7 @@ class Socket:
                 raise SocketError('Cant send more than 1400 bytes')
 
             delay_secs = 0
-            if self._send_count.value > 5:
+            if self._send_count.value >= 5:
                 # "Short Term" policy (1 packet per 2 seconds).
                 # Enforced after the first 5 packets.
                 delay_secs = 2
