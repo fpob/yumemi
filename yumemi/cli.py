@@ -38,8 +38,7 @@ class AnidbDate(click.ParamType):
         if date_time == 'now':
             return int(time.time())
         elif _format:
-            local_dt = time.mktime(time.strptime(date_time, _format))
-            return int(local_dt - time.timezone) + time.timezone
+            return int(time.mktime(time.strptime(date_time, _format)))
         for cre, fmt in cls.FROM_STR_DATE:
             match = cre.match(date_time)
             if match:
@@ -109,7 +108,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
     client = anidb.Client()
     try:
         client.auth(username, password)
-    except exceptions.ClientError as e:
+    except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
 

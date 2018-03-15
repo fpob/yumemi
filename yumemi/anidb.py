@@ -110,16 +110,13 @@ class Client:
     PROTOVER = 3
     CLIENT = 'maichan'  # Old client name; version 1
     VERSION = 2
-    ENCODING = 'UTF-8'
+    ENCODING = 'ASCII'
 
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
     LOCALPORT = 8888
 
     def __init__(self, server=None, localport=None, session=None):
-        if isinstance(server, str):
-            server_split = server.split(':')
-            server = (server_split[0], int(server_split[1]))
         self._socket = Socket(server or self.SERVER,
                               localport or self.LOCALPORT)
         self._session = session
@@ -170,7 +167,7 @@ class Client:
 
         query = '&'.join('{}={}'.format(str(k), self._escape(str(v)))
                          for k, v in params.items())
-        request_bytes = (command + ' ' + query).strip().encode('ascii')
+        request_bytes = (command + ' ' + query).strip().encode(self.ENCODING)
 
         logger.debug('Client request: %s', repr(request_bytes))
 
@@ -190,7 +187,7 @@ class Client:
 
         logger.debug('Client response: %s', repr(response_bytes))
 
-        lines = response_bytes.decode('ascii').splitlines()
+        lines = response_bytes.decode(self.ENCODING).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
         data = [[self._unescape(field) for field in line.split('|')]
