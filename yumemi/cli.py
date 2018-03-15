@@ -74,7 +74,7 @@ def ping(ctx, param, value):
     end = time.time()
 
     if pong:
-        click.echo('{} ms'.format(round((end - start) * 1000)), err=True)
+        click.echo('OK, {} ms'.format(round((end - start) * 1000)), err=True)
     else:
         click.echo('AniDB API server is unavailable', err=True)
 
@@ -129,7 +129,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
                 'size': file_size,
                 'state': 3 if deleted else 1,  # 1 = internal storage (hdd)
                 'viewed': int(watched),
-                'viewdate': view_date,  # field will be disregarded if viewed=0
+                'viewdate': view_date,  # field will be ignored if viewed=0
                 'edit': int(edit),
             })
 

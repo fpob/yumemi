@@ -32,9 +32,16 @@ class Socket:
         Send some bytes to AniDB and receive some bytes (joins socket.sendto()
         and socket.recv() into one method).
 
+        Data length is limited to 1400 bytes and if this limit is exceeded,
+        SockerError is raised.
+
         This function is thread save so multiple processes or threads can send
         data to AniDB and packets are correctly delayed (according to AniDB
         flood protection policy) and paired (request-response).
+
+        Raises:
+            SocketError
+            SocketTimeout
         """
         with self._lock:
             if len(data) > 1400:
@@ -90,7 +97,10 @@ class Response:
 
     @property
     def data(self):
-        """Data. May be None."""
+        """
+        Data from response, split to lines and then divided by field
+        separators. Returns list of lists or None if error occured.
+        """
         return self._data
 
     def __str__(self):
@@ -99,7 +109,7 @@ class Response:
 
 class Client:
     """
-    Main class for commucate with AniDB.
+    Main class for communication with AniDB.
 
     Implements some basic commands and provides interface to use all other
     commands.
@@ -136,10 +146,14 @@ class Client:
         """
         Send command to AniDB and return response.
 
+        When sending command which require login session parameter `s` is
+        automatically set. If user is not logged in and sending some command
+        which requires login then ClientError is raised even without sending
+        any packet.
+
         Arguments:
             command -- AniDB command, case insensitive
-            params  -- dict of command parameters,
-                       `s` parameter is added automatically
+            params  -- dict with command parameters
             retry   -- if command fails then retry N times
         Returns:
             Response
@@ -157,7 +171,7 @@ class Client:
             raise ClientError('ENCRYPT command is not supported')
 
         if command not in {'PING', 'ENCODING', 'AUTH', 'VERSION'}:
-            # All other commands requres loging.
+            # All other commands requres session.
             if not self._session:
                 raise ClientError.from_response(Response(501, 'LOGIN FIRST'))
             params['s'] = self._session
