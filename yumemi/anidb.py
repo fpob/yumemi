@@ -16,7 +16,6 @@ class Socket:
     _lock = multiprocessing.Lock()
     _last_time = multiprocessing.Value(ctypes.c_double, time.time())
     _send_count = multiprocessing.Value(ctypes.c_int, 0)
-    _lost_count = multiprocessing.Value(ctypes.c_int, 0)
 
     def __init__(self, server, localport):
         self.server = server
@@ -53,12 +52,6 @@ class Socket:
                 # Enforced after the first 5 packets.
                 delay_secs = 2
 
-            lost_ratio = (self._lost_count.value / self._send_count.value
-                          if self._send_count.value > 0 else 0.0)
-            if self._send_count.value > 100 or lost_ratio > 0.1:
-                # "Long Term" policy (common sense?).
-                delay_secs = 4
-
             t = time.time()
             if t < self._last_time.value + delay_secs:
                 time.sleep(self._last_time.value + delay_secs - t)
@@ -73,7 +66,6 @@ class Socket:
                 # Replies from the server will never exceed 1400 bytes.
                 return self._socket.recv(1400)
             except socket.timeout as e:
-                self._lost_count.value += 1
                 raise SocketTimeout from e
 
 
