@@ -9,7 +9,7 @@ class SocketTestCase(unittest.TestCase):
     def test_init(self, *args):
         s = Socket(('localhost', 1234), 4321)
         s._socket.bind.assert_called_once_with(('0.0.0.0', 4321))
-        s._socket.settimeout.assert_called_once()
+        s._socket.settimeout.assert_called_once_with(4)
 
     @unittest.mock.patch('yumemi.anidb.socket.socket')
     def test_send_recv(self, *args):
@@ -26,14 +26,14 @@ class ClientSocketTestCase(unittest.TestCase):
         c = Client()
         self.assertEqual(c._socket.server, Client.SERVER)
         c._socket._socket.bind.assert_called_once_with(('0.0.0.0', Client.LOCALPORT))
-        c._socket._socket.settimeout.assert_called_once()
+        c._socket._socket.settimeout.assert_called_once_with(4)
 
     @unittest.mock.patch('yumemi.anidb.socket.socket')
     def test_init_none(self, *args):
         c = Client(None, None, None)
         self.assertEqual(c._socket.server, Client.SERVER)
         c._socket._socket.bind.assert_called_once_with(('0.0.0.0', Client.LOCALPORT))
-        c._socket._socket.settimeout.assert_called_once()
+        c._socket._socket.settimeout.assert_called_once_with(4)
 
     @unittest.mock.patch('yumemi.anidb.socket.socket')
     def test_send_recv(self, *args):
