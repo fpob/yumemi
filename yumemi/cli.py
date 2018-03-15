@@ -38,8 +38,7 @@ class AnidbDate(click.ParamType):
         if date_time == 'now':
             return int(time.time())
         elif _format:
-            local_dt = time.mktime(time.strptime(date_time, _format))
-            return int(local_dt - time.timezone) + time.timezone
+            return int(time.mktime(time.strptime(date_time, _format)))
         for cre, fmt in cls.FROM_STR_DATE:
             match = cre.match(date_time)
             if match:
@@ -74,7 +73,7 @@ def ping(ctx, param, value):
     end = time.time()
 
     if pong:
-        click.echo('{} ms'.format(round((end - start) * 1000)), err=True)
+        click.echo('OK, {} ms'.format(round((end - start) * 1000)), err=True)
     else:
         click.echo('AniDB API server is unavailable', err=True)
 
@@ -109,7 +108,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
     client = anidb.Client()
     try:
         client.auth(username, password)
-    except exceptions.ClientError as e:
+    except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
 
@@ -129,7 +128,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, files):
                 'size': file_size,
                 'state': 3 if deleted else 1,  # 1 = internal storage (hdd)
                 'viewed': int(watched),
-                'viewdate': view_date,  # field will be disregarded if viewed=0
+                'viewdate': view_date,  # field will be ignored if viewed=0
                 'edit': int(edit),
             })
 

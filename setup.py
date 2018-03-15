@@ -8,7 +8,7 @@ import yumemi
 setup(
     name='yumemi',
     version=yumemi.__version__,
-    description='AniDB client',
+    description='AniDB library and simple CLI client.',
     author='Filip Pobořil',
     author_email='tsuki@fpob.eu',
     license='BSD',

@@ -16,7 +16,6 @@ class Socket:
     _lock = multiprocessing.Lock()
     _last_time = multiprocessing.Value(ctypes.c_double, time.time())
     _send_count = multiprocessing.Value(ctypes.c_int, 0)
-    _lost_count = multiprocessing.Value(ctypes.c_int, 0)
 
     def __init__(self, server, localport):
         self.server = server
@@ -32,9 +31,16 @@ class Socket:
         Send some bytes to AniDB and receive some bytes (joins socket.sendto()
         and socket.recv() into one method).
 
+        Data length is limited to 1400 bytes and if this limit is exceeded,
+        SockerError is raised.
+
         This function is thread save so multiple processes or threads can send
         data to AniDB and packets are correctly delayed (according to AniDB
         flood protection policy) and paired (request-response).
+
+        Raises:
+            SocketError
+            SocketTimeout
         """
         with self._lock:
             if len(data) > 1400:
@@ -45,12 +51,6 @@ class Socket:
                 # "Short Term" policy (1 packet per 2 seconds).
                 # Enforced after the first 5 packets.
                 delay_secs = 2
-
-            lost_ratio = (self._lost_count.value / self._send_count.value
-                          if self._send_count.value > 0 else 0.0)
-            if self._send_count.value > 100 or lost_ratio > 0.1:
-                # "Long Term" policy (common sense?).
-                delay_secs = 4
 
             t = time.time()
             if t < self._last_time.value + delay_secs:
@@ -66,7 +66,6 @@ class Socket:
                 # Replies from the server will never exceed 1400 bytes.
                 return self._socket.recv(1400)
             except socket.timeout as e:
-                self._lost_count.value += 1
                 raise SocketTimeout from e
 
 
@@ -90,7 +89,10 @@ class Response:
 
     @property
     def data(self):
-        """Data. May be None."""
+        """
+        Data from response, split to lines and then divided by field
+        separators. Returns list of lists or None if error occured.
+        """
         return self._data
 
     def __str__(self):
@@ -99,7 +101,7 @@ class Response:
 
 class Client:
     """
-    Main class for commucate with AniDB.
+    Main class for communication with AniDB.
 
     Implements some basic commands and provides interface to use all other
     commands.
@@ -108,16 +110,13 @@ class Client:
     PROTOVER = 3
     CLIENT = 'maichan'  # Old client name; version 1
     VERSION = 2
-    ENCODING = 'UTF-8'
+    ENCODING = 'ASCII'
 
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
     LOCALPORT = 8888
 
     def __init__(self, server=None, localport=None, session=None):
-        if isinstance(server, str):
-            server_split = server.split(':')
-            server = (server_split[0], int(server_split[1]))
         self._socket = Socket(server or self.SERVER,
                               localport or self.LOCALPORT)
         self._session = session
@@ -136,10 +135,14 @@ class Client:
         """
         Send command to AniDB and return response.
 
+        When sending command which require login session parameter `s` is
+        automatically set. If user is not logged in and sending some command
+        which requires login then ClientError is raised even without sending
+        any packet.
+
         Arguments:
             command -- AniDB command, case insensitive
-            params  -- dict of command parameters,
-                       `s` parameter is added automatically
+            params  -- dict with command parameters
             retry   -- if command fails then retry N times
         Returns:
             Response
@@ -157,14 +160,14 @@ class Client:
             raise ClientError('ENCRYPT command is not supported')
 
         if command not in {'PING', 'ENCODING', 'AUTH', 'VERSION'}:
-            # All other commands requres loging.
+            # All other commands requres session.
             if not self._session:
                 raise ClientError.from_response(Response(501, 'LOGIN FIRST'))
             params['s'] = self._session
 
         query = '&'.join('{}={}'.format(str(k), self._escape(str(v)))
                          for k, v in params.items())
-        request_bytes = (command + ' ' + query).strip().encode('ascii')
+        request_bytes = (command + ' ' + query).strip().encode(self.ENCODING)
 
         logger.debug('Client request: %s', repr(request_bytes))
 
@@ -184,7 +187,7 @@ class Client:
 
         logger.debug('Client response: %s', repr(response_bytes))
 
-        lines = response_bytes.decode('ascii').splitlines()
+        lines = response_bytes.decode(self.ENCODING).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
         data = [[self._unescape(field) for field in line.split('|')]
