@@ -14,6 +14,9 @@ setup(
     license='BSD',
     packages=['yumemi'],
     install_requires=['click'],
+    extras_require={
+        'encrypt': ['pycrypto'],
+    },
     entry_points={
         'console_scripts': [
             'yumemi=yumemi.cli:main'

@@ -89,6 +89,8 @@ def mylistadd_file_params(file):
               expose_value=False, help='Test connection to AniDB API server.')
 @click.option('-u', '--username', prompt=True, envvar='USERNAME')
 @click.option('-p', '--password', prompt=True, hide_input=True)
+@click.option('--encrypt', default=None,
+              help='Ecrypt messages. Parameter value is API Key.')
 @click.option('-w', '--watched', is_flag=True, default=False,
               help='Mark files as watched.')
 @click.option('-W', '--view-date', type=AnidbDate(), default=0, metavar='DATE',
@@ -103,10 +105,13 @@ def mylistadd_file_params(file):
               help='Number of adding processes. Default is CPU count.')
 @click.argument('files', nargs=-1,
                 type=click.Path(exists=True, dir_okay=False))
-def cli(username, password, watched, view_date, deleted, edit, jobs, files):
+def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
+        files):
     """AniDB client for adding files to mylist."""
     client = anidb.Client()
     try:
+        if encrypt:
+            client.encrypt(encrypt, username)
         client.auth(username, password)
     except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)

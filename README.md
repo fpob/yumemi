@@ -53,3 +53,9 @@ and install Python package including dependencies
 ```
 python3 setup.py install
 ```
+
+To use optional encryption, package `pycrypto` must be installed
+
+```
+pip3 install pycrypto
+```
