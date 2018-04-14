@@ -153,7 +153,7 @@ class Client:
 
     PROTOVER = 3
     CLIENT = 'maichan'  # Old client name; version 1
-    VERSION = 2
+    VERSION = 3
     ENCODING = 'ASCII'
 
     # Default connection parameters
