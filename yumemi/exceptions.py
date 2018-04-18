@@ -33,3 +33,8 @@ class ServerError(AnidbApiError):
 class ClientError(AnidbApiError):
     """AniDB API error with code 5** and 4**."""
     pass
+
+
+class EncryptError(AnidbApiError):
+    """Encryption error, encrypted session cannot be established."""
+    pass

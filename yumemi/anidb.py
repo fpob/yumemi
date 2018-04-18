@@ -3,8 +3,11 @@ import ctypes
 import multiprocessing
 import time
 import logging
+import hashlib
+import re
 
-from .exceptions import SocketError, SocketTimeout, ServerError, ClientError
+from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
+                         EncryptError)
 
 
 logger = logging.getLogger(__name__)
@@ -99,6 +102,48 @@ class Response:
         return self._message
 
 
+class Codec:
+    """Class for encoding and decoding strings to bytes."""
+
+    def __init__(self, encoding='ASCII'):
+        self.encoding = encoding
+
+    def encode(self, data):
+        return data.encode(self.encoding)
+
+    def decode(self, data):
+        return data.decode(self.encoding)
+
+
+class EncryptCodec(Codec):
+    """
+    Codec with AES encryption (AES 128-bit, ECB, PKCS5).
+
+    To use encryption, package `pycrypto` is required. Raises ImportError if
+    package `pycrypto` is not installed.
+    """
+
+    def __init__(self, api_key, salt, **kwargs):
+        super().__init__(**kwargs)
+        from Crypto.Cipher import AES
+        self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
+
+    def _hash_key(self, key):
+        return hashlib.new('md5', key.encode(self.encoding)).digest()
+
+    def _pad(self, data):
+        return data + (16 - len(data) % 16) * chr(16 - len(data) % 16)
+
+    def _unpad(self, data):
+        return data[0:-ord(data[-1])]
+
+    def encode(self, data):
+        return self._aes.encrypt(super().encode(self._pad(data)))
+
+    def decode(self, data):
+        return self._unpad(super().decode(self._aes.decrypt(data)))
+
+
 class Client:
     """
     Main class for communication with AniDB.
@@ -109,16 +154,20 @@ class Client:
 
     PROTOVER = 3
     CLIENT = 'maichan'  # Old client name; version 1
-    VERSION = 2
+    VERSION = 3
     ENCODING = 'ASCII'
 
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
     LOCALPORT = 8888
 
+    # Valid username regex.
+    USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
+
     def __init__(self, server=None, localport=None, session=None):
         self._socket = Socket(server or self.SERVER,
                               localport or self.LOCALPORT)
+        self._codec = Codec(encoding=self.ENCODING)
         self._session = session
 
     def __enter__(self):
@@ -156,10 +205,7 @@ class Client:
         command = command.upper()
         retry_count = 0
 
-        if command == 'ENCRYPT':
-            raise ClientError('ENCRYPT command is not supported')
-
-        if command not in {'PING', 'ENCODING', 'AUTH', 'VERSION'}:
+        if command not in {'PING', 'ENCODING', 'ENCRYPT', 'AUTH', 'VERSION'}:
             # All other commands requres session.
             if not self._session:
                 raise ClientError.from_response(Response(501, 'LOGIN FIRST'))
@@ -167,9 +213,7 @@ class Client:
 
         query = '&'.join('{}={}'.format(str(k), self._escape(str(v)))
                          for k, v in params.items())
-        request_bytes = (command + ' ' + query).strip().encode(self.ENCODING)
-
-        logger.debug('Client request: %s', repr(request_bytes))
+        request_bytes = self._codec.encode((command + ' ' + query).strip())
 
         response_bytes = None
         while not response_bytes:
@@ -185,9 +229,7 @@ class Client:
         if not response_bytes:
             raise ServerError.from_response(Response(603, 'NO DATA'))
 
-        logger.debug('Client response: %s', repr(response_bytes))
-
-        lines = response_bytes.decode(self.ENCODING).splitlines()
+        lines = self._codec.decode(response_bytes).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
         data = [[self._unescape(field) for field in line.split('|')]
@@ -214,6 +256,27 @@ class Client:
             return self.call('PING').code == 300
         except SocketTimeout:
             return False
+
+    def encrypt(self, api_key, username):
+        """
+        Start encrypted session.
+
+        See: call()
+        Command: ENCRYPT
+        """
+        response = self.call('ENCRYPT', {
+            'user': username,
+            'type': 1,
+        }, retry=0)
+
+        if response.code == 209:
+            salt, _ = response.message.split(' ', maxsplit=1)
+            self._codec = EncryptCodec(api_key, salt,
+                                       encoding=self._codec.encoding)
+        elif response.code in {309, 394}:
+            raise EncryptError.from_response(response)
+
+        return response
 
     def auth(self, username, password):
         """
@@ -249,6 +312,7 @@ class Client:
         response = self.call('LOGOUT')
         if response.code == 203:
             self._session = None
+            self._codec = Codec(encoding=self._codec.encoding)
         return response
 
     def is_logged_in(self):

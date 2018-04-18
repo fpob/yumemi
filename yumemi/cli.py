@@ -5,6 +5,7 @@ import time
 
 import click
 
+import yumemi
 from . import anidb
 from . import exceptions
 from . import ed2k
@@ -62,6 +63,11 @@ class AnidbDate(click.ParamType):
         return date
 
 
+def validate_username(ctx, param, value):
+    if not anidb.Client.USERNAME_CRE.match(value):
+        raise click.BadParameter('Invalid username')
+
+
 def ping(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -85,10 +91,14 @@ def mylistadd_file_params(file):
 
 
 @click.command()
+@click.version_option(version=yumemi.__version__)
 @click.option('--ping', is_flag=True, callback=ping, is_eager=True,
               expose_value=False, help='Test connection to AniDB API server.')
-@click.option('-u', '--username', prompt=True, envvar='USERNAME')
+@click.option('-u', '--username', prompt=True, envvar='USERNAME',
+              callback=validate_username)
 @click.option('-p', '--password', prompt=True, hide_input=True)
+@click.option('--encrypt', default=None, envvar='ENCRYPT',
+              help='Ecrypt messages. Parameter value is API Key.')
 @click.option('-w', '--watched', is_flag=True, default=False,
               help='Mark files as watched.')
 @click.option('-W', '--view-date', type=AnidbDate(), default=0, metavar='DATE',
@@ -99,14 +109,17 @@ def mylistadd_file_params(file):
               help='Set file state to deleted.')
 @click.option('-e', '--edit', is_flag=True, default=False,
               help='Set edit flag to true.')
-@click.option('-j', '--jobs', default=None,
+@click.option('-j', '--jobs', default=None, envvar='JOBS',
               help='Number of adding processes. Default is CPU count.')
 @click.argument('files', nargs=-1,
                 type=click.Path(exists=True, dir_okay=False))
-def cli(username, password, watched, view_date, deleted, edit, jobs, files):
+def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
+        files):
     """AniDB client for adding files to mylist."""
     client = anidb.Client()
     try:
+        if encrypt:
+            client.encrypt(encrypt, username)
         client.auth(username, password)
     except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)

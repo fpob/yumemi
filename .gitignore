@@ -1,6 +1,7 @@
 __pycache__
 *.pyc
 .cache
+.pytest_cache
 tags
 run.py
 
