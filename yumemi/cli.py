@@ -95,7 +95,7 @@ def mylistadd_file_params(file):
 @click.option('-u', '--username', prompt=True, envvar='USERNAME',
               callback=validate_username)
 @click.option('-p', '--password', prompt=True, hide_input=True)
-@click.option('--encrypt', default=None,
+@click.option('--encrypt', default=None, envvar='ENCRYPT',
               help='Ecrypt messages. Parameter value is API Key.')
 @click.option('-w', '--watched', is_flag=True, default=False,
               help='Mark files as watched.')
@@ -107,7 +107,7 @@ def mylistadd_file_params(file):
               help='Set file state to deleted.')
 @click.option('-e', '--edit', is_flag=True, default=False,
               help='Set edit flag to true.')
-@click.option('-j', '--jobs', default=None,
+@click.option('-j', '--jobs', default=None, envvar='JOBS',
               help='Number of adding processes. Default is CPU count.')
 @click.argument('files', nargs=-1,
                 type=click.Path(exists=True, dir_okay=False))
