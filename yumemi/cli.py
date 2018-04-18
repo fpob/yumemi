@@ -62,6 +62,11 @@ class AnidbDate(click.ParamType):
         return date
 
 
+def validate_username(ctx, param, value):
+    if not anidb.Client.USERNAME_CRE.match(value):
+        raise click.BadParameter('Invalid username')
+
+
 def ping(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -87,7 +92,8 @@ def mylistadd_file_params(file):
 @click.command()
 @click.option('--ping', is_flag=True, callback=ping, is_eager=True,
               expose_value=False, help='Test connection to AniDB API server.')
-@click.option('-u', '--username', prompt=True, envvar='USERNAME')
+@click.option('-u', '--username', prompt=True, envvar='USERNAME',
+              callback=validate_username)
 @click.option('-p', '--password', prompt=True, hide_input=True)
 @click.option('--encrypt', default=None,
               help='Ecrypt messages. Parameter value is API Key.')

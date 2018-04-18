@@ -4,6 +4,7 @@ import multiprocessing
 import time
 import logging
 import hashlib
+import re
 
 from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
                          EncryptError)
@@ -159,6 +160,9 @@ class Client:
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
     LOCALPORT = 8888
+
+    # Valid username regex.
+    USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
 
     def __init__(self, server=None, localport=None, session=None):
         self._socket = Socket(server or self.SERVER,
