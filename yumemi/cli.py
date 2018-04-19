@@ -66,6 +66,7 @@ class AnidbDate(click.ParamType):
 def validate_username(ctx, param, value):
     if not anidb.Client.USERNAME_CRE.match(value):
         raise click.BadParameter('Invalid username')
+    return value
 
 
 def ping(ctx, param, value):
@@ -121,7 +122,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
         if encrypt:
             client.encrypt(encrypt, username)
         client.auth(username, password)
-    except exceptions.AnidbError as e:
+    except exceptions.AnidbApiError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
 
