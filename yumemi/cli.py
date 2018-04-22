@@ -117,12 +117,15 @@ def mylistadd_file_params(file):
 def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
         files):
     """AniDB client for adding files to mylist."""
+    if not files:
+        return
+
     client = anidb.Client()
     try:
         if encrypt:
             client.encrypt(encrypt, username)
         client.auth(username, password)
-    except exceptions.AnidbApiError as e:
+    except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
 

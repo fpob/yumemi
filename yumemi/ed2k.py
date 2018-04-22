@@ -1,5 +1,6 @@
 import hashlib
 import copy
+import os
 
 
 class Ed2k:
@@ -65,3 +66,17 @@ def file_ed2k(file_path):
                 break
             ed2k.update(data)
     return ed2k.hexdigest()
+
+
+def file_ed2k_link(file_path):
+    file_name = os.path.basename(file_path)
+    file_size = os.path.getsize(file_path)
+    file_hash = file_ed2k(file_path)
+    return ('ed2k://|file|{file_name}|{file_size}|{file_hash}|/'
+            .format(**locals()))
+
+
+if __name__ == '__main__':
+    import sys
+    for file in sys.argv[1:]:
+        print(file_ed2k_link(file))

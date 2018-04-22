@@ -19,6 +19,7 @@ class Socket:
     _lock = multiprocessing.Lock()
     _last_time = multiprocessing.Value(ctypes.c_double, time.time())
     _send_count = multiprocessing.Value(ctypes.c_int, 0)
+    _drop_count = multiprocessing.Value(ctypes.c_int, 0)
 
     def __init__(self, server, localport):
         self.server = server
@@ -50,10 +51,14 @@ class Socket:
                 raise SocketError('Cant send more than 1400 bytes')
 
             delay_secs = 0
-            if self._send_count.value >= 5:
+            if self._send_count.value > 2:
                 # "Short Term" policy (1 packet per 2 seconds).
                 # Enforced after the first 5 packets.
                 delay_secs = 2
+            if self._drop_count.value > 2:
+                # "Long Term" policy (1 packet per 4 seconds).
+                # Used when server starts dropping packets.
+                delay_secs = 4
 
             t = time.time()
             if t < self._last_time.value + delay_secs:
@@ -69,7 +74,11 @@ class Socket:
                 # Replies from the server will never exceed 1400 bytes.
                 return self._socket.recv(1400)
             except socket.timeout as e:
+                self._drop_count.value += 1
                 raise SocketTimeout from e
+            else:
+                if self._drop_count.value > 0:
+                    self._drop_count.value -= 1
 
 
 class Response:
