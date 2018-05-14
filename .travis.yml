@@ -12,3 +12,11 @@ install:
 script:
   - flake8 yumemi
   - pytest tests
+
+deploy:
+  provider: pypi
+  user: fpob
+  password:
+    secure: XWZRsUU0YB8F1Uz5UKgnjq2zjULrkbEMs2YqmR7BrVLokwnR1c9vbGDyTpRjlzO1sYLUJm7QuDqiPMvzPYjRQNpA31F7VIF0QFzGMirDFLeXpm9hBnrbfxYxUUmWx6x+q5K74n9HRuLysuHERTmGOv2zneeBytlewlBUaYzXGyUaQLaG/IuchF7U+Dbi+CJx+JRJ+bBbhBZU7f/yAkl5D/7eOWyyd1IPwLZcaGbnXHiBXVUewry2zAGy7D80GKQOsekuAm+aZ3MZFFFgrIRJiTyOdnqsM+rEEDma+40oq6A04hWAYDnSqeB/q1bNE6XDaXOrS28PKeEbQfEPYXAl8JyqfSRFPmIRLA858pot0y01CFagshJfZYo+oFtsnGAs4rhsivx55d7hwsgVvQ4F4RQzziWNWy9JYDyOtguhL6+tdBZ7US+5VC5gjhGcutCkcsZ0aO1U7o8+ZkZB9ioMAaaG+ZxxWBGJOl2L2DFTxdu5zRS5ixfdjwTChlMJm0HhHgNpI5rheei5Ng8IAhRXoy3R/2iXwE252Jgb/A0LHV6h5SR9jJ6fznpJc2ybonXlP85pQnJjV30pjahiucEvlK0fAeVbr2Dm9T61LJpSLfQow9HlMZqjWN80fdUwVtjqq2MZGd2/mkFURsBFP3pp57IpUjxdFD6TXe6xqO3fbzY=
+  on:
+    tags: true
