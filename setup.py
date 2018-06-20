@@ -1,11 +1,16 @@
 from setuptools import setup
 from os import path
-
-import yumemi
+import re
 
 
 __dir__ = path.abspath(path.dirname(__file__))
 
+
+with open(path.join(__dir__, 'yumemi', '__init__.py')) as f:
+    for line in f:
+        if re.match(r'__version__', line):
+            exec(line)
+            break
 
 with open(path.join(__dir__, 'README.rst')) as f:
     long_description = f.read()
@@ -13,13 +18,13 @@ with open(path.join(__dir__, 'README.rst')) as f:
 
 setup(
     name='yumemi',
-    version=yumemi.__version__,
+    version=__version__,
     description='AniDB library and simple CLI client.',
     long_description=long_description,
     author='Filip Pobořil',
     author_email='tsuki@fpob.eu',
     url='https://github.com/fpob/yumemi',
-    download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(yumemi.__version__),
+    download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(__version__),
     license='MIT',
     keywords=['AniDB'],
     classifiers=[
