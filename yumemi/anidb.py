@@ -183,6 +183,11 @@ class Client:
         return self
 
     def __exit__(self, type, value, traceback):
+        # flake8: noqa: E722 (bare except)
+        try:
+            self.logout()
+        except:
+            pass
         del self._socket
 
     def __call__(self, *args, **kwargs):
