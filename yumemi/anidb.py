@@ -203,6 +203,8 @@ class Client:
         which requires login then ClientError is raised even without sending
         any packet.
 
+        This method is thread safe.
+
         Arguments:
             command -- AniDB command, case insensitive
             params  -- dict with command parameters
