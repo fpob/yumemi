@@ -189,7 +189,7 @@ class Client:
         """See: call()"""
         return self.call(*args, **kwargs)
 
-    def call(self, command, params=dict(), retry=1):
+    def call(self, command, params=None, retry=1):
         """
         Send command to AniDB and return response.
 
@@ -213,6 +213,9 @@ class Client:
         """
         command = command.upper()
         retry_count = 0
+
+        if not params:
+            params = dict()
 
         if command not in {'PING', 'ENCODING', 'ENCRYPT', 'AUTH', 'VERSION'}:
             # All other commands requres session.
