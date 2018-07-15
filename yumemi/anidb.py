@@ -183,13 +183,18 @@ class Client:
         return self
 
     def __exit__(self, type, value, traceback):
+        # flake8: noqa: E722 (bare except)
+        try:
+            self.logout()
+        except:
+            pass
         del self._socket
 
     def __call__(self, *args, **kwargs):
         """See: call()"""
         return self.call(*args, **kwargs)
 
-    def call(self, command, params=dict(), retry=1):
+    def call(self, command, params=None, retry=1):
         """
         Send command to AniDB and return response.
 
@@ -197,6 +202,8 @@ class Client:
         automatically set. If user is not logged in and sending some command
         which requires login then ClientError is raised even without sending
         any packet.
+
+        This method is thread safe.
 
         Arguments:
             command -- AniDB command, case insensitive
@@ -213,6 +220,9 @@ class Client:
         """
         command = command.upper()
         retry_count = 0
+
+        if not params:
+            params = dict()
 
         if command not in {'PING', 'ENCODING', 'ENCRYPT', 'AUTH', 'VERSION'}:
             # All other commands requres session.
