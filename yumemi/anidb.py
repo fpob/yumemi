@@ -2,15 +2,11 @@ import socket
 import ctypes
 import multiprocessing
 import time
-import logging
 import hashlib
 import re
 
 from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
                          EncryptError)
-
-
-logger = logging.getLogger(__name__)
 
 
 class Socket:
@@ -316,8 +312,6 @@ class Client:
         self._session = None
         if response.code in {200, 201}:
             self._session, _ = response.message.split(' ', maxsplit=1)
-            if response.code == 201:
-                logger.info('NEW VERSION AVAILABLE')
 
         return response
 
