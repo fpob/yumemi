@@ -124,7 +124,9 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
     try:
         if encrypt:
             client.encrypt(encrypt, username)
-        client.auth(username, password)
+        response = client.auth(username, password)
+        if response.code == 201:
+            click.echo('New version available')
     except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
