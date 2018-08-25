@@ -112,14 +112,11 @@ def mylistadd_file_params(file):
               help='Set edit flag to true.')
 @click.option('-j', '--jobs', default=None, envvar='JOBS',
               help='Number of adding processes. Default is CPU count.')
-@click.argument('files', nargs=-1,
+@click.argument('files', nargs=-1, required=True,
                 type=click.Path(exists=True, dir_okay=False))
 def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
         files):
     """AniDB client for adding files to mylist."""
-    if not files:
-        return
-
     client = anidb.Client()
     try:
         if encrypt:
