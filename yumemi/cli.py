@@ -110,7 +110,7 @@ def mylistadd_file_params(file):
               help='Set file state to deleted.')
 @click.option('-e', '--edit', is_flag=True, default=False,
               help='Set edit flag to true.')
-@click.option('-j', '--jobs', default=None, envvar='JOBS',
+@click.option('-j', '--jobs', type=int, default=None, envvar='JOBS',
               help='Number of adding processes. Default is CPU count.')
 @click.argument('files', nargs=-1, required=True,
                 type=click.Path(exists=True, dir_okay=False))
