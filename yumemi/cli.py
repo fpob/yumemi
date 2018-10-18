@@ -124,6 +124,9 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
         response = client.auth(username, password)
         if response.code == 201:
             click.echo('New version available')
+    except exceptions.SocketTimeout:
+        click.echo('SocketTimeout: AniDB API server is unavailable')
+        return
     except exceptions.AnidbError as e:
         click.echo('ERROR: {}'.format(str(e)), err=True)
         return
