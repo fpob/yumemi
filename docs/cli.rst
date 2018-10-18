@@ -1,26 +1,12 @@
-Yumemi
-======
-
-AniDB library for Python and simple CLI client. Also provides functions to
-calculate ed2k hash.
-
-.. code:: python
-
-    client = yumemi.Client()
-    client.auth('login', '*****')
-    
-    response = client.call('ANIME', {'aid': 11829})
-    # ...
-    
-    ed2k_hash = yumemi.ed2k.file_ed2k('/tmp/foo')
-    # ...
-
-
 CLI
----
+===
 
-Command line client can only test connection to the API server and add files to
-mylist. Thats all, nothing else will be added, i think. ::
+Add files to mylist
+-------------------
+
+With library is also installed simple script to add files to mylist
+
+.. code-block:: none
 
     Usage: yumemi [OPTIONS] [FILES]...
      
@@ -49,38 +35,11 @@ terminal or place it to your ``~/.profile`` file ::
     export YUMEMI_USERNAME=your-username
 
 Ed2k
-****
+----
 
-Simple CLI is also in the Ed2k module. You can generate Ed2k links by executing
-``yumemi.ed2k`` module. ::
+Ed2k module has also very simple CLI which takes list of files and prints ed2k
+liks
+
+.. code-block:: none
 
     python3 -m yumemi.ed2k [FILE...]
-
-
-Installation
-------------
-
-Install it using pip ::
-
-    pip3 install yumemi
-
-or clone repository ::
-
-    git clone https://github.com/fpob/yumemi
-    cd yumemi
-
-and install Python package including dependencies ::
-
-    python3 setup.py install
-
-To use optional encryption, package ``pycrypto`` must be installed ::
-
-    pip3 install pycrypto
-
-
-Documentation
--------------
-
-Documentation can be found at `Read The Docs`_.
-
-.. _Read The Docs: https://yumemi.readthedocs.io/
