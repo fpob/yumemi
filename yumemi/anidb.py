@@ -29,12 +29,12 @@ class Socket:
     def send_recv(self, data):
         """
         Send some bytes to AniDB and receive some bytes (joins socket.sendto()
-        and socket.recv() into one method).
+        and socket.recv() to one method).
 
         Data length is limited to 1400 bytes and if this limit is exceeded,
-        SockerError is raised.
+        SocketError is raised.
 
-        This function is thread save so multiple processes or threads can send
+        This function is thread safe so multiple processes or threads can send
         data to AniDB and packets are correctly delayed (according to AniDB
         flood protection policy) and paired (request-response).
 
@@ -99,7 +99,9 @@ class Response:
     def data(self):
         """
         Data from response, split to lines and then divided by field
-        separators. Returns list of lists or None if error occured.
+        separators.
+
+        List of lists or None if error occured.
         """
         return self._data
 
@@ -124,8 +126,8 @@ class EncryptCodec(Codec):
     """
     Codec with AES encryption (AES 128-bit, ECB, PKCS5).
 
-    To use encryption, package `pycrypto` is required. Raises ImportError if
-    package `pycrypto` is not installed.
+    Raises:
+        ImportError -- If package pycrypto is not installed.
     """
 
     def __init__(self, api_key, salt, **kwargs):
@@ -194,7 +196,7 @@ class Client:
         """
         Send command to AniDB and return response.
 
-        When sending command which require login session parameter `s` is
+        When sending command which require login session parameter 's' is
         automatically set. If user is not logged in and sending some command
         which requires login then ClientError is raised even without sending
         any packet.
@@ -205,14 +207,17 @@ class Client:
             command -- AniDB command, case insensitive
             params  -- dict with command parameters
             retry   -- if command fails then retry N times
+
         Returns:
             Response
+
         Raises:
             SocketTimeout
             ServerError
             ClientError
 
-        See: https://wiki.anidb.net/w/UDP_API_Definition
+        See:
+            https://wiki.anidb.net/w/UDP_API_Definition
         """
         command = command.upper()
         retry_count = 0
@@ -263,9 +268,6 @@ class Client:
 
         Returns:
             True if connection and server is okay, otherwise False
-
-        See: call()
-        Command: PING
         """
         try:
             return self.call('PING').code == 300
@@ -276,8 +278,8 @@ class Client:
         """
         Start encrypted session.
 
-        See: call()
-        Command: ENCRYPT
+        Returns:
+            Response
         """
         response = self.call('ENCRYPT', {
             'user': username,
@@ -297,8 +299,8 @@ class Client:
         """
         Authorize to AniDB.
 
-        See: call()
-        Command: AUTH
+        Returns:
+            Response
         """
         response = self.call('AUTH', {
             'user': username,
@@ -319,8 +321,8 @@ class Client:
         """
         Logout from AniDB.
 
-        See: call()
-        Command: LOGOUT
+        Returns:
+            Response
         """
         response = self.call('LOGOUT')
         if response.code == 203:
