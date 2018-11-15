@@ -83,7 +83,7 @@ class Response:
     def __init__(self, code, message, data=None):
         self._code = code
         self._message = message
-        self._data = data
+        self._data = data or []
 
     @property
     def code(self):
@@ -101,7 +101,7 @@ class Response:
         Data from response, split to lines and then divided by field
         separators.
 
-        List of lists or None if error occured.
+        Value is list of lists with fields or empty list on error.
         """
         return self._data
 

@@ -103,12 +103,12 @@ class ClientTestCase(unittest.TestCase):
     def test_ping(self, *args):
         c = Client()
 
-        c.call.return_value = Response(300, 'PONG', None)
+        c.call.return_value = Response(300, 'PONG')
         pong = c.ping()
         c.call.assert_called_with('PING')
         self.assertTrue(pong)
 
-        c.call.return_value = Response(500, 'SOME ERROR', None)
+        c.call.return_value = Response(500, 'SOME ERROR')
         pong = c.ping()
         c.call.assert_called_with('PING')
         self.assertFalse(pong)
@@ -118,7 +118,7 @@ class ClientTestCase(unittest.TestCase):
     def test_auth_logout(self, *args):
         c = Client()
 
-        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED', None)
+        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED')
 
         resp = c.auth('user', 'pass')
 
@@ -136,7 +136,7 @@ class ClientTestCase(unittest.TestCase):
         self.assertTrue(c.is_logged_in())
         self.assertEqual(c._session, 'sess')
 
-        c.call.return_value = Response(203, 'LOGGED OUT', None)
+        c.call.return_value = Response(203, 'LOGGED OUT')
 
         resp = c.logout()
 
@@ -152,7 +152,7 @@ class ClientTestCase(unittest.TestCase):
     def test_encoding(self, *args):
         c = Client()
 
-        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED', None)
+        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED')
         c.auth('user', 'pass')
 
         c.call.return_value = Response(219, 'ENCODING CHANGED')
