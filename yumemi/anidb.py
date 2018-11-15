@@ -112,7 +112,7 @@ class Response:
 class Codec:
     """Class for encoding and decoding strings to bytes."""
 
-    def __init__(self, encoding='ASCII'):
+    def __init__(self, encoding):
         self.encoding = encoding
 
     def encode(self, data):
@@ -171,10 +171,11 @@ class Client:
     # Valid username regex.
     USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
 
-    def __init__(self, server=None, localport=None, session=None):
+    def __init__(self, server=None, localport=None,
+                 session=None, encoding=None):
         self._socket = Socket(server or self.SERVER,
                               localport or self.LOCALPORT)
-        self._codec = Codec(encoding=self.ENCODING)
+        self._codec = Codec(encoding=encoding or self.ENCODING)
         self._session = session
 
     def __enter__(self):
@@ -308,7 +309,7 @@ class Client:
             'protover': self.PROTOVER,
             'client': self.CLIENT,
             'clientver': self.VERSION,
-            'enc': self.ENCODING,
+            'enc': self._codec.encoding,
         }, retry=0)
 
         self._session = None
@@ -316,6 +317,24 @@ class Client:
             self._session, _ = response.message.split(' ', maxsplit=1)
 
         return response
+
+    def encoding(self, encoding):
+        """
+        Change encoding for session. This command does not require session.
+
+        Encoding is reset to default ASCII on logout or timeout.
+
+        Returns:
+            True if encoding was changed, otherwise False
+
+        See: call()
+        Command: ENCODING
+        """
+        response = self.call('ENCODING', {'name': encoding})
+        if response.code == 219:
+            self._codec.encoding = encoding
+            return True
+        return False
 
     def logout(self):
         """
@@ -327,7 +346,7 @@ class Client:
         response = self.call('LOGOUT')
         if response.code == 203:
             self._session = None
-            self._codec = Codec(encoding=self._codec.encoding)
+            self._codec = Codec(encoding=self.ENCODING)
         return response
 
     def is_logged_in(self):

@@ -146,3 +146,22 @@ class ClientTestCase(unittest.TestCase):
         self.assertEqual(call_command, 'LOGOUT')
         self.assertFalse(c.is_logged_in())
         self.assertIsNone(c._session)
+
+    @unittest.mock.patch('yumemi.anidb.Socket')
+    @unittest.mock.patch.object(Client, 'call')
+    def test_encoding(self, *args):
+        c = Client()
+
+        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED', None)
+        c.auth('user', 'pass')
+
+        c.call.return_value = Response(219, 'ENCODING CHANGED')
+        c.encoding('UTF-8')
+
+        self.assertEqual(c._codec.encoding, 'UTF-8')
+
+        c.call.return_value = Response(203, 'LOGGED OUT')
+        c.logout()
+
+        # Encoding should be reset to default after logout
+        self.assertEqual(c._codec.encoding, Client.ENCODING)
