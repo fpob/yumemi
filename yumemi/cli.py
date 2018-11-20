@@ -123,12 +123,12 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
             client.encrypt(encrypt, username)
         response = client.auth(username, password)
         if response.code == 201:
-            click.echo('New version available')
+            click.secho('New version available', bold=True)
     except exceptions.SocketTimeout:
-        click.echo('SocketTimeout: AniDB API server is unavailable')
+        click.secho('AniDB API server is unavailable', fg='red', err=True)
         return
     except exceptions.AnidbError as e:
-        click.echo('ERROR: {}'.format(str(e)), err=True)
+        click.secho(str(e), fg='red', err=True)
         return
 
     if watched and not view_date:
@@ -159,7 +159,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
             click.echo('[{}] {}: {}'.format(status, result.message,
                                             click.format_filename(file)))
         except exceptions.AnidbError as e:
-            click.echo('ERROR: {}'.format(str(e)), err=True)
+            click.secho(str(e), fg='red', err=True)
             break
 
     mp_pool.close()
