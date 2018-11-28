@@ -10,7 +10,11 @@ from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
 
 
 class Socket:
-    """AniDB socket with thread safe flood protection."""
+    """
+    AniDB socket with thread safe `flood protection`_.
+
+    .. _flood protection: https://wiki.anidb.net/w/UDP_API_Definition#Flood_Protection
+    """
 
     _lock = multiprocessing.Lock()
     _last_time = multiprocessing.Value(ctypes.c_double, time.time())
@@ -124,6 +128,8 @@ class Codec:
     Class for encoding and decoding strings to bytes.
 
     :param encoding: string encoding
+
+    :ivar encoding: string encoding
     """
 
     def __init__(self, encoding):
@@ -143,10 +149,12 @@ class EncryptCodec(Codec):
     Codec with AES encryption (AES 128-bit, ECB, PKCS5).
 
     :param api_key: "UDP API key", can be found at AniDB in Settings > Account
-    :param salt: salt returned by `ENCRYPT <https://wiki.anidb.net/w/UDP_API_Definition#ENCRYPT:_Start_Encrypted_Session>`_
-                 command
+    :param salt: salt returned by `ENCRYPT` command
+    :param encoding: string encoding
 
     :raises ImportError: If package pycrypto is not installed.
+
+    :ivar encoding: string encoding
     """
 
     def __init__(self, api_key, salt, encoding):

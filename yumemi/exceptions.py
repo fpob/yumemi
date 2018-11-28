@@ -17,7 +17,11 @@ class SocketTimeout(SocketError, socket.timeout):
 
 
 class AnidbApiError(AnidbError):
-    """Error from AniDB API, base Exception."""
+    """
+    Error from AniDB API, base Exception.
+
+    :ivar response: :class:`yumemi.Response` or `None`
+    """
     def __init__(self, *args, response=None):
         super().__init__(*args)
         self.response = response

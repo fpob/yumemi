@@ -16,8 +16,8 @@ calculate ed2k hash.
 
     This library not intends to wrap every single API message into function,
     method, or whatever. It just provides simple way to authenticate and then
-    simplify sending commands in the correct form, respecting flood protection
-    policy.
+    simplify sending commands in the correct form, respecting `flood protection
+    policy <https://wiki.anidb.net/w/UDP_API_Definition#Flood_Protection>`_.
 
 
 Installation

@@ -33,26 +33,35 @@ Exceptions
 .. automodule:: yumemi.exceptions
 
 .. autoclass:: yumemi.AnidbError
+   :show-inheritance:
 
 .. autoclass:: yumemi.SocketError
+   :show-inheritance:
 
 .. autoclass:: yumemi.SocketTimeout
+   :show-inheritance:
 
 .. autoclass:: yumemi.AnidbApiError
+   :show-inheritance:
    :members:
 
 .. autoclass:: yumemi.ServerError
+   :show-inheritance:
 
 .. autoclass:: yumemi.ClientError
+   :show-inheritance:
 
 .. autoclass:: yumemi.EncryptError
+   :show-inheritance:
 
 
 Ed2k
 ----
 
+.. automodule:: yumemi.ed2k
+
 .. note::
-   This mode is not imported with `yumemi` package.
+   This module is not automatically imported with `yumemi`.
 
 .. autoclass:: yumemi.ed2k.Ed2k
 

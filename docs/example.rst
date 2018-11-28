@@ -1,7 +1,7 @@
 Example
 =======
 
-All documentation in one example...
+Nearly all documentation in one example...
 
 .. code-block:: python
 

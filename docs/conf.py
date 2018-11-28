@@ -21,6 +21,14 @@ ROOT_DIR = os.path.abspath('..')
 sys.path.insert(0, ROOT_DIR)
 
 
+# Workaround to have correct names in docs when using wildcard import in
+# `__init__.py`. See: https://stackoverflow.com/a/47924396
+import yumemi
+for obj in yumemi.__dict__.values():
+    if hasattr(obj, '__module__'):
+        obj.__module__ = yumemi.__name__
+
+
 # -- Project information -----------------------------------------------------
 
 project = 'Yumemi'
