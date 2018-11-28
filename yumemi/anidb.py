@@ -130,8 +130,8 @@ class EncryptCodec(Codec):
         ImportError -- If package pycrypto is not installed.
     """
 
-    def __init__(self, api_key, salt, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, api_key, salt, encoding):
+        super().__init__(encoding)
         from Crypto.Cipher import AES
         self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
 
