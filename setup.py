@@ -3,28 +3,30 @@ from os import path
 import re
 
 
-__dir__ = path.abspath(path.dirname(__file__))
-
-
-with open(path.join(__dir__, 'yumemi', '__init__.py')) as f:
+version = None
+with open(path.join('yumemi', '__init__.py')) as f:
+    version_cre = re.compile(
+        r'^__version__\s+=\s+[\'"](?P<version>\d+\.\d+.*)[\'"]$'
+    )
     for line in f:
-        if re.match(r'__version__', line):
-            exec(line)
+        match = version_cre.match(line)
+        if match:
+            version = match.group('version')
             break
 
-with open(path.join(__dir__, 'README.rst')) as f:
+with open('README.rst') as f:
     long_description = f.read()
 
 
 setup(
     name='yumemi',
-    version=__version__,
+    version=version,
     description='AniDB library and simple CLI client.',
     long_description=long_description,
     author='Filip Pobořil',
     author_email='tsuki@fpob.eu',
     url='https://github.com/fpob/yumemi',
-    download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(__version__),
+    download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(version),
     license='MIT',
     keywords=['AniDB'],
     classifiers=[
