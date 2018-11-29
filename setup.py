@@ -24,7 +24,7 @@ setup(
     description='AniDB library and simple CLI client.',
     long_description=long_description,
     author='Filip Pobořil',
-    author_email='tsuki@fpob.eu',
+    author_email='tsuki@fpob.cz',
     url='https://github.com/fpob/yumemi',
     download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(version),
     license='MIT',
