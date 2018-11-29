@@ -8,24 +8,24 @@ With library is also installed simple script to add files to mylist
 
 .. code-block:: none
 
-    Usage: yumemi [OPTIONS] [FILES]...
-     
-       AniDB client for adding files to mylist.
-     
-    Options:
-      --version             Show the version and exit.
-      --ping                Test connection to AniDB API server.
-      -u, --username TEXT
-      -p, --password TEXT
-      --encrypt TEXT        Ecrypt messages. Parameter value is API Key.
-      -w, --watched         Mark files as watched.
-      -W, --view-date DATE  Set viewdate to certain date. Implies -w/--watched.
-                            Formats: Y-m-d[ H:M[:S]] | y H:M (yesterday) | -#[d]
-                            H:M (before # days).
-      -d, --deleted         Set file state to deleted.
-      -e, --edit            Set edit flag to true.
-      -j, --jobs TEXT       Number of adding processes. Default is CPU count.
-      -h, --help            Show this message and exit.
+   Usage: yumemi [OPTIONS] FILES...
+   
+     AniDB client for adding files to mylist.
+   
+   Options:
+     --version             Show the version and exit.
+     --ping                Test connection to AniDB API server.
+     -u, --username TEXT
+     -p, --password TEXT
+     --encrypt TEXT        Ecrypt messages. Parameter value is API Key.
+     -w, --watched         Mark files as watched.
+     -W, --view-date DATE  Set viewdate to certain date. Implies -w/--watched.
+                           Formats: Y-m-d[ H:M[:S]] | y H:M (yesterday) | -#[d]
+                           H:M (before # days).
+     -d, --deleted         Set file state to deleted.
+     -e, --edit            Set edit flag to true.
+     -j, --jobs INTEGER    Number of adding processes. Default is CPU count.
+     -h, --help            Show this message and exit.
 
 Values of options ``username``, ``encrypt`` and ``jobs`` are also read from
 environment variables prefixed with ``YUMEMI_``. For example if you don't want
