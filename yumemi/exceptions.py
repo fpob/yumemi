@@ -20,7 +20,7 @@ class AnidbApiError(AnidbError):
     """
     Error from AniDB API, base Exception.
 
-    :ivar response: :class:`yumemi.Response` or `None`
+    :ivar response: :class:`Response` or `None`
     """
     def __init__(self, *args, response=None):
         super().__init__(*args)
@@ -28,7 +28,7 @@ class AnidbApiError(AnidbError):
 
     @classmethod
     def from_response(cls, response):
-        """Create exception from Response."""
+        """Create exception from :class:`Response`."""
         return cls(str(response), response=response)
 
 

@@ -249,7 +249,7 @@ class Client:
 
         :returns: :class:`Response`
 
-        :raises SocketTimeout: level socket errors
+        :raises SocketError: socket errors
         :raises ServerError: server side error
         :raises ClientError: client side error or when not loggen in and
                              command require session
@@ -365,7 +365,7 @@ class Client:
         .. note::
             Encoding is reset to default ASCII on logout or on timeout.
 
-        :params encoding: encoding name
+        :param encoding: encoding name
 
         :returns: `True` if encoding was changed, otherwise `False`
 
