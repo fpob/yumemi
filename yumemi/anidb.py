@@ -194,8 +194,8 @@ class Client:
     """
 
     PROTOVER = 3
-    CLIENT = 'maichan'  # Old client name; version 1
-    VERSION = 3
+    CLIENT = 'yumemi'
+    VERSION = 1
     ENCODING = 'ASCII'
 
     # Default connection parameters
