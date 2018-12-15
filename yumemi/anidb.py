@@ -10,7 +10,11 @@ from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
 
 
 class Socket:
-    """AniDB socket with thread safe flood protection."""
+    """
+    AniDB socket with thread safe `flood protection`_.
+
+    .. _flood protection: https://wiki.anidb.net/w/UDP_API_Definition#Flood_Protection
+    """
 
     _lock = multiprocessing.Lock()
     _last_time = multiprocessing.Value(ctypes.c_double, time.time())
@@ -28,19 +32,22 @@ class Socket:
 
     def send_recv(self, data):
         """
-        Send some bytes to AniDB and receive some bytes (joins socket.sendto()
-        and socket.recv() into one method).
+        Send some bytes to AniDB and receive some bytes (joins
+        :meth:`socket.socket.sendto` and :meth:`socket.socket.recv` to one
+        method).
 
         Data length is limited to 1400 bytes and if this limit is exceeded,
-        SockerError is raised.
+        :class:`SocketError` is raised.
 
-        This function is thread save so multiple processes or threads can send
+        This function is thread safe so multiple processes or threads can send
         data to AniDB and packets are correctly delayed (according to AniDB
         flood protection policy) and paired (request-response).
 
-        Raises:
-            SocketError
-            SocketTimeout
+        .. note::
+            This method is thread safe.
+
+        :raises SocketError: when data size is greater than 1400 bytes
+        :raises SocketTimeout: on socket timeout, server is probably down
         """
         with self._lock:
             if len(data) > 1400:
@@ -83,23 +90,32 @@ class Response:
     def __init__(self, code, message, data=None):
         self._code = code
         self._message = message
-        self._data = data
+        self._data = data or []
 
     @property
     def code(self):
-        """Response code."""
+        """
+        Response code.
+
+        :type: int
+        """
         return self._code
 
     @property
     def message(self):
-        """Textual representation of response code."""
+        """
+        Textual representation of response code.
+
+        :type: str
+        """
         return self._message
 
     @property
     def data(self):
         """
-        Data from response, split to lines and then divided by field
-        separators. Returns list of lists or None if error occured.
+        Data from response.
+
+        :type: List of lists with fields or empty list on error.
         """
         return self._data
 
@@ -108,15 +124,23 @@ class Response:
 
 
 class Codec:
-    """Class for encoding and decoding strings to bytes."""
+    """
+    Class for encoding and decoding strings to bytes.
 
-    def __init__(self, encoding='ASCII'):
+    :param encoding: string encoding
+
+    :ivar encoding: string encoding
+    """
+
+    def __init__(self, encoding):
         self.encoding = encoding
 
     def encode(self, data):
+        """Encode given string data to bytes."""
         return data.encode(self.encoding)
 
     def decode(self, data):
+        """Decode data from given bytes to string."""
         return data.decode(self.encoding)
 
 
@@ -124,12 +148,17 @@ class EncryptCodec(Codec):
     """
     Codec with AES encryption (AES 128-bit, ECB, PKCS5).
 
-    To use encryption, package `pycrypto` is required. Raises ImportError if
-    package `pycrypto` is not installed.
+    :param api_key: "UDP API key", can be found at AniDB in Settings > Account
+    :param salt: salt returned by `ENCRYPT` command
+    :param encoding: string encoding
+
+    :raises ImportError: If package pycrypto is not installed.
+
+    :ivar encoding: string encoding
     """
 
-    def __init__(self, api_key, salt, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, api_key, salt, encoding):
+        super().__init__(encoding)
         from Crypto.Cipher import AES
         self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
 
@@ -143,9 +172,11 @@ class EncryptCodec(Codec):
         return data[0:-ord(data[-1])]
 
     def encode(self, data):
+        """Encode given string data to bytes and encrypt them."""
         return self._aes.encrypt(super().encode(self._pad(data)))
 
     def decode(self, data):
+        """Decode data from given bytes to string and decrypt them."""
         return self._unpad(super().decode(self._aes.decrypt(data)))
 
 
@@ -155,11 +186,16 @@ class Client:
 
     Implements some basic commands and provides interface to use all other
     commands.
+
+    This class can be used in `with` statement. ::
+
+        with yumemi.Client() as c:
+            ...
     """
 
     PROTOVER = 3
-    CLIENT = 'maichan'  # Old client name; version 1
-    VERSION = 3
+    CLIENT = 'yumemi'
+    VERSION = 1
     ENCODING = 'ASCII'
 
     # Default connection parameters
@@ -169,10 +205,11 @@ class Client:
     # Valid username regex.
     USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
 
-    def __init__(self, server=None, localport=None, session=None):
+    def __init__(self, server=None, localport=None,
+                 session=None, encoding=None):
         self._socket = Socket(server or self.SERVER,
                               localport or self.LOCALPORT)
-        self._codec = Codec(encoding=self.ENCODING)
+        self._codec = Codec(encoding=encoding or self.ENCODING)
         self._session = session
 
     def __enter__(self):
@@ -187,32 +224,38 @@ class Client:
         del self._socket
 
     def __call__(self, *args, **kwargs):
-        """See: call()"""
+        """
+        See:
+            :meth:`call`
+        """
         return self.call(*args, **kwargs)
 
     def call(self, command, params=None, retry=1):
         """
         Send command to AniDB and return response.
 
-        When sending command which require login session parameter `s` is
+        When sending command which require login session parameter 's' is
         automatically set. If user is not logged in and sending some command
-        which requires login then ClientError is raised even without sending
-        any packet.
+        which requires login then :class:`ClientError` is raised even without
+        sending any packet.
 
-        This method is thread safe.
+        .. note::
+            This method itself is thread safe since it do not change state of
+            `self`.
 
-        Arguments:
-            command -- AniDB command, case insensitive
-            params  -- dict with command parameters
-            retry   -- if command fails then retry N times
-        Returns:
-            Response
-        Raises:
-            SocketTimeout
-            ServerError
-            ClientError
+        :param command: AniDB command, case insensitive
+        :param params: dict with command parameters
+        :param retry: if command fails then retry N times
 
-        See: https://wiki.anidb.net/w/UDP_API_Definition
+        :returns: :class:`Response`
+
+        :raises SocketError: socket errors
+        :raises ServerError: server side error
+        :raises ClientError: client side error or when not loggen in and
+                             command require session
+
+        See:
+            https://wiki.anidb.net/w/UDP_API_Definition
         """
         command = command.upper()
         retry_count = 0
@@ -259,13 +302,9 @@ class Client:
 
     def ping(self):
         """
-        Test connection to server.
+        Test connection to server or keep connection alive.
 
-        Returns:
-            True if connection and server is okay, otherwise False
-
-        See: call()
-        Command: PING
+        :returns: `True` if connection and server is okay, otherwise `False`
         """
         try:
             return self.call('PING').code == 300
@@ -276,8 +315,10 @@ class Client:
         """
         Start encrypted session.
 
-        See: call()
-        Command: ENCRYPT
+        :param api_key: API key, defined in profile settings
+        :param username: user name
+
+        :returns: :class:`Response`
         """
         response = self.call('ENCRYPT', {
             'user': username,
@@ -297,8 +338,10 @@ class Client:
         """
         Authorize to AniDB.
 
-        See: call()
-        Command: AUTH
+        :param username: user name
+        :param password: user's password
+
+        :returns: :class:`Response`
         """
         response = self.call('AUTH', {
             'user': username,
@@ -306,7 +349,7 @@ class Client:
             'protover': self.PROTOVER,
             'client': self.CLIENT,
             'clientver': self.VERSION,
-            'enc': self.ENCODING,
+            'enc': self._codec.encoding,
         }, retry=0)
 
         self._session = None
@@ -315,21 +358,43 @@ class Client:
 
         return response
 
+    def encoding(self, encoding):
+        """
+        Change encoding for session. This command does not require session.
+
+        .. note::
+            Encoding is reset to default ASCII on logout or on timeout.
+
+        :param encoding: encoding name
+
+        :returns: `True` if encoding was changed, otherwise `False`
+
+        List of supported encodings: http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html
+        """
+        response = self.call('ENCODING', {'name': encoding})
+        if response.code == 219:
+            self._codec.encoding = encoding
+            return True
+        return False
+
     def logout(self):
         """
         Logout from AniDB.
 
-        See: call()
-        Command: LOGOUT
+        :returns: :class:`Response`
         """
         response = self.call('LOGOUT')
         if response.code == 203:
             self._session = None
-            self._codec = Codec(encoding=self._codec.encoding)
+            self._codec = Codec(encoding=self.ENCODING)
         return response
 
     def is_logged_in(self):
-        """Check if user is logged in (session key is set)."""
+        """
+        Check if user is logged in (session key is set).
+
+        :returns: bool
+        """
         return self._session is not None
 
     def _escape(self, string):

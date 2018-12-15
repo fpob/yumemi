@@ -103,12 +103,12 @@ class ClientTestCase(unittest.TestCase):
     def test_ping(self, *args):
         c = Client()
 
-        c.call.return_value = Response(300, 'PONG', None)
+        c.call.return_value = Response(300, 'PONG')
         pong = c.ping()
         c.call.assert_called_with('PING')
         self.assertTrue(pong)
 
-        c.call.return_value = Response(500, 'SOME ERROR', None)
+        c.call.return_value = Response(500, 'SOME ERROR')
         pong = c.ping()
         c.call.assert_called_with('PING')
         self.assertFalse(pong)
@@ -118,7 +118,7 @@ class ClientTestCase(unittest.TestCase):
     def test_auth_logout(self, *args):
         c = Client()
 
-        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED', None)
+        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED')
 
         resp = c.auth('user', 'pass')
 
@@ -136,7 +136,7 @@ class ClientTestCase(unittest.TestCase):
         self.assertTrue(c.is_logged_in())
         self.assertEqual(c._session, 'sess')
 
-        c.call.return_value = Response(203, 'LOGGED OUT', None)
+        c.call.return_value = Response(203, 'LOGGED OUT')
 
         resp = c.logout()
 
@@ -146,3 +146,22 @@ class ClientTestCase(unittest.TestCase):
         self.assertEqual(call_command, 'LOGOUT')
         self.assertFalse(c.is_logged_in())
         self.assertIsNone(c._session)
+
+    @unittest.mock.patch('yumemi.anidb.Socket')
+    @unittest.mock.patch.object(Client, 'call')
+    def test_encoding(self, *args):
+        c = Client()
+
+        c.call.return_value = Response(200, 'sess LOGIN ACCEPTED')
+        c.auth('user', 'pass')
+
+        c.call.return_value = Response(219, 'ENCODING CHANGED')
+        c.encoding('UTF-8')
+
+        self.assertEqual(c._codec.encoding, 'UTF-8')
+
+        c.call.return_value = Response(203, 'LOGGED OUT')
+        c.logout()
+
+        # Encoding should be reset to default after logout
+        self.assertEqual(c._codec.encoding, Client.ENCODING)

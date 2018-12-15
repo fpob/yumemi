@@ -69,6 +69,7 @@ def file_ed2k(file_path):
 
 
 def file_ed2k_link(file_path):
+    """Calcucate ed2k hash of the given file and create ed2k link."""
     file_name = os.path.basename(file_path)
     file_size = os.path.getsize(file_path)
     file_hash = file_ed2k(file_path)
