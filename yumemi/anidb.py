@@ -6,6 +6,12 @@ import hashlib
 import re
 import zlib
 
+try:
+    from Crypto.Cipher import AES
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
 from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
                          EncryptError)
 
@@ -161,8 +167,9 @@ class EncryptCodec(Codec):
     """
 
     def __init__(self, api_key, salt, encoding):
+        if not HAS_CRYPTO:
+            raise RuntimeError('Package `pycrypto` is not installed')
         super().__init__(encoding)
-        from Crypto.Cipher import AES
         self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
 
     def _hash_key(self, key):
