@@ -4,6 +4,7 @@ import multiprocessing
 import time
 import hashlib
 import re
+import zlib
 
 from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
                          EncryptError)
@@ -141,6 +142,8 @@ class Codec:
 
     def decode(self, data):
         """Decode data from given bytes to string."""
+        if data.startswith(b'\0\0'):
+            data = zlib.decompressobj().decompress(data[2:])
         return data.decode(self.encoding)
 
 
@@ -350,6 +353,7 @@ class Client:
             'client': self.CLIENT,
             'clientver': self.VERSION,
             'enc': self._codec.encoding,
+            'comp': '1',
         }, retry=0)
 
         self._session = None
