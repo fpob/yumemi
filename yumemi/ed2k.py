@@ -1,6 +1,7 @@
 import hashlib
 import copy
 import os
+import re
 
 
 class Ed2k:
@@ -75,6 +76,20 @@ def file_ed2k_link(file_path):
     file_hash = file_ed2k(file_path)
     return ('ed2k://|file|{file_name}|{file_size}|{file_hash}|/'
             .format(**locals()))
+
+
+def parse_ed2k_link(ed2k_link):
+    """
+    Parse ed2k link.
+
+    :returns: ``tuple(name, size, hash)``
+              or `None` when link could not be parsed
+    """
+    match = re.match(r'^ed2k://\|file\|(.*)\|(\d+)\|([0-9a-f]{32})\|/?$',
+                     ed2k_link, re.I)
+    if match:
+        return match.group(1), int(match.group(2)), match.group(3)
+    return None
 
 
 if __name__ == '__main__':

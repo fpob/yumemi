@@ -68,3 +68,5 @@ Ed2k
 .. autofunction:: yumemi.ed2k.file_ed2k
 
 .. autofunction:: yumemi.ed2k.file_ed2k_link
+
+.. autofunction:: yumemi.ed2k.parse_ed2k_link
