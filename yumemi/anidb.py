@@ -198,7 +198,7 @@ class Client:
 
     PROTOVER = 3
     CLIENT = 'yumemi'
-    VERSION = 1
+    VERSION = 2
     ENCODING = 'ASCII'
 
     # Default connection parameters
