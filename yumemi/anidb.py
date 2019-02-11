@@ -279,8 +279,14 @@ class Client:
                 raise ClientError.from_response(Response(501, 'LOGIN FIRST'))
             params['s'] = self._session
 
-        query = '&'.join('{}={}'.format(str(k), self._escape(str(v)))
-                         for k, v in params.items())
+        for k, v in params.items():
+            if v is None:
+                v = ''
+            elif isinstance(v, bool):
+                v = int(v)
+            params[k] = self._escape(str(v))
+
+        query = '&'.join('{}={}'.format(k, v) for k, v in params.items())
         request_bytes = self._codec.encode((command + ' ' + query).strip())
 
         response_bytes = None

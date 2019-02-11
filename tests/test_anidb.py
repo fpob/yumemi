@@ -103,6 +103,19 @@ class ClientCallTestCase(unittest.TestCase):
                                          ['X', 'Y', 'Z']])
 
     @unittest.mock.patch('yumemi.anidb.Socket')
+    def test_params_converting(self, *args):
+        c = Client()
+        c._socket.send_recv.return_value = b'200 OK\n'
+
+        with self.subTest(type=bool):
+            c.call('PING', {'key': True})
+            c._socket.send_recv.assert_called_with(b'PING key=1')
+
+        with self.subTest(type=None):
+            c.call('PING', {'key': None})
+            c._socket.send_recv.assert_called_with(b'PING key=')
+
+    @unittest.mock.patch('yumemi.anidb.Socket')
     def test_escape(self, *args):
         c = Client()
         c._socket.send_recv.return_value = b'200 OK'

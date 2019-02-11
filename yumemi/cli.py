@@ -146,9 +146,9 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
                 'ed2k': file_ed2k,
                 'size': file_size,
                 'state': 3 if deleted else 1,  # 1 = internal storage (hdd)
-                'viewed': int(watched),
+                'viewed': watched,
                 'viewdate': view_date,  # field will be ignored if viewed=0
-                'edit': int(edit),
+                'edit': edit,
             })
 
             if result.code in {210, 310, 311}:
