@@ -127,7 +127,7 @@ class ClientCallTestCase(unittest.TestCase):
         c = Client()
         c._socket.send_recv.return_value = b'200 OK\nmulti<br />line|pi/pe|`apo`'
         resp = c.call('PING')
-        self.assertListEqual(resp.data, [['multi\nline', 'pi|pe', "'apo'"]])
+        self.assertListEqual(resp.data, [['multi\nline', 'pi/pe', "`apo`"]])
 
 
 class ClientTestCase(unittest.TestCase):

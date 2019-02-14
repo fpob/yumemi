@@ -422,7 +422,7 @@ class Client:
 
     def _unescape(self, string):
         """AniDB content decoding (from server)."""
-        return (string
-                .replace('<br />', '\n')
-                .replace('`', "'")
-                .replace('/', '|'))
+        # Characters ` and / are not replaced because they appears in some
+        # anime or episode names so decoding them to ' and | leads to wrong
+        # results.
+        return string.replace('<br />', '\n')
