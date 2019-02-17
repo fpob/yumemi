@@ -408,11 +408,26 @@ class Client:
 
     def is_logged_in(self):
         """
-        Check if user is logged in (session key is set).
+        Check if user is logged in (session key is set). To check if session is
+        active use :meth:`check_session`.
 
         :returns: bool
         """
         return self._session is not None
+
+    def check_session(self):
+        """
+        Check if session is still active on server. If this method return
+        `False` then auth sequence (:meth:`encrypt`, :meth:`encoding` and
+        :meth:`auth`) must be resubmitted.
+
+        .. note::
+            This method can be used to keep session alive by calling it every
+            15 minutes or so.
+
+        :returns: `True` if session is active, otherwise `False`
+        """
+        return self.call('UPTIME').code == 208
 
     def _escape(self, string):
         """AniDB content encoding (to server)."""
