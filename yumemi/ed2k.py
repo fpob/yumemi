@@ -82,14 +82,17 @@ def parse_ed2k_link(ed2k_link):
     """
     Parse ed2k link.
 
+    :param ed2k_link: Ed2k link (``ed2k://|file|{name}|{size}|{hash}|``)
+
     :returns: ``tuple(name, size, hash)``
-              or `None` when link could not be parsed
+
+    :raises ValueError: if link could not be parsed as Ed2k link
     """
     match = re.match(r'^ed2k://\|file\|(.*)\|(\d+)\|([0-9a-f]{32})\|/?$',
                      ed2k_link, re.I)
-    if match:
-        return match.group(1), int(match.group(2)), match.group(3)
-    return None
+    if not match:
+        raise ValueError("Could not parse '{}' as Ed2k link".format(ed2k_link))
+    return match.group(1), int(match.group(2)), match.group(3)
 
 
 if __name__ == '__main__':
