@@ -1,6 +1,30 @@
 import unittest
+import tempfile
 
 from yumemi.ed2k import *
+
+
+class FileEd2kTestCase(unittest.TestCase):
+    DATA = [
+        # data, ed2k_hash
+        ('0' * 1024,
+         'cc8987d3db399feec0a28a74cbc350d5'),
+        ('0' * 9728000,   # chunk_size
+         'd8a24bd5137c60e610e414189e8445dc'),
+        ('0' * 19456000,  # chunk_size * 2
+         'b148215d3d6dc00ab6952b43abde6976'),
+        ('0' * 19457024,  # chunk_size * 2 + 1024
+         '54c5c3580fcb33a55c4b913986b2708e'),
+    ]
+
+    def test_file_ed2k(self):
+        for data, ed2k_hash in self.DATA:
+            with self.subTest(ed2k_hash):
+                with tempfile.NamedTemporaryFile(mode='w') as tmp:
+                    tmp.write(data)
+                    tmp.flush()
+
+                    self.assertEqual(file_ed2k(tmp.name), ed2k_hash)
 
 
 class ParseEd2kLinkTestCase(unittest.TestCase):
