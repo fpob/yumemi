@@ -58,7 +58,7 @@ class Socket:
         """
         with self._lock:
             if len(data) > 1400:
-                raise SocketError('Cant send more than 1400 bytes')
+                raise SocketError('Can\'t send more than 1400 bytes')
 
             delay_secs = 0
             if self._send_count.value > 2:
@@ -132,7 +132,7 @@ class Response:
 
 class Codec:
     """
-    Class for encoding and decoding strings to bytes.
+    Class for encoding and decoding strings to bytes with compression support.
 
     :param encoding: string encoding
 
@@ -195,7 +195,7 @@ class Client:
     Main class for communication with AniDB.
 
     Implements some basic commands and provides interface to use all other
-    commands.
+    commands via :meth:`call` method.
 
     This class can be used in `with` statement. ::
 
@@ -244,9 +244,9 @@ class Client:
         """
         Send command to AniDB and return response.
 
-        When sending command which require login session parameter 's' is
+        When sending command that require login session, parameter 's' is
         automatically set. If user is not logged in and sending some command
-        which requires login then :class:`ClientError` is raised even without
+        that requires login then :class:`ClientError` is raised even without
         sending any packet.
 
         .. note::
@@ -260,9 +260,9 @@ class Client:
         :returns: :class:`Response`
 
         :raises SocketError: socket errors
-        :raises ServerError: server side error
         :raises ClientError: client side error or when not loggen in and
-                             command require session
+                             command require session (response code 500-599)
+        :raises ServerError: server side error (response code 600-699)
 
         See:
             https://wiki.anidb.net/w/UDP_API_Definition
@@ -320,6 +320,8 @@ class Client:
         """
         Test connection to server or keep connection alive.
 
+        Uses :meth:`call` with ``PING`` command.
+
         :returns: `True` if connection and server is okay, otherwise `False`
         """
         try:
@@ -331,10 +333,14 @@ class Client:
         """
         Start encrypted session.
 
+        Uses :meth:`call` with ``ENCRYPT`` command.
+
         :param api_key: API key, defined in profile settings
         :param username: user name
 
         :returns: :class:`Response`
+
+        :raises EncryptError: when encrypted session could not be established
         """
         response = self.call('ENCRYPT', {
             'user': username,
@@ -353,6 +359,8 @@ class Client:
     def auth(self, username, password):
         """
         Authorize to AniDB.
+
+        Uses :meth:`call` with ``AUTH`` command.
 
         :param username: user name
         :param password: user's password
@@ -379,6 +387,8 @@ class Client:
         """
         Change encoding for session. This command does not require session.
 
+        Uses :meth:`call` with ``ENCODING`` command.
+
         .. note::
             Encoding is reset to default ASCII on logout or on timeout.
 
@@ -397,6 +407,8 @@ class Client:
     def logout(self):
         """
         Logout from AniDB.
+
+        Uses :meth:`call` with ``LOGOUT`` command.
 
         :returns: :class:`Response`
         """
@@ -420,6 +432,8 @@ class Client:
         Check if session is still active on server. If this method return
         `False` then auth sequence (:meth:`encrypt`, :meth:`encoding` and
         :meth:`auth`) must be resubmitted.
+
+        Uses :meth:`call` with ``UPTIME`` command.
 
         .. note::
             This method can be used to keep session alive by calling it every

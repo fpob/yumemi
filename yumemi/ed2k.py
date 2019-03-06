@@ -8,7 +8,7 @@ class Ed2k:
     """
     Ed2k hash implementation.
 
-    Interface is the same as hashlib.hash objects.
+    Interface is the same as ``hashlib.hash`` objects.
     """
 
     chunk_size = 9728000
@@ -84,7 +84,7 @@ def parse_ed2k_link(ed2k_link):
 
     :param ed2k_link: Ed2k link (``ed2k://|file|{name}|{size}|{hash}|``)
 
-    :returns: ``tuple(name, size, hash)``
+    :returns: ``tuple(name: str, size: int, hash: str)``
 
     :raises ValueError: if link could not be parsed as Ed2k link
     """
