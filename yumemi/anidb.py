@@ -127,6 +127,23 @@ class Response:
         """
         return self._data
 
+    def data_asdict(self, keys):
+        """
+        Convert :attr:`data` to tuple of dicts.
+
+        :param: list of keys for created dicts
+
+        :returns: tuple of dicts
+
+        :raises ValueError: If number of provided keys not match number of
+                            fields in :attr:`data`
+        """
+        def fields_asdict(fields):
+            if len(keys) != len(fields):
+                raise ValueError('Number of keys not match number of fields')
+            return dict(zip(keys, fields))
+        return tuple(fields_asdict(fields) for fields in self.data)
+
     def __str__(self):
         return self._message
 

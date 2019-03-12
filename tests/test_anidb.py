@@ -40,6 +40,27 @@ class CodecTestCase(unittest.TestCase):
                 self.assertEqual(c.decode(i), o)
 
 
+class ResponseTestCase(unittest.TestCase):
+    def test_data_asdict(self):
+        r = Response(123, 'Foo', (
+            ('a', 'b', 'c'),
+            ('x', 'y', 'z'),
+        ))
+        data_asdict = r.data_asdict(['1', '2', '3'])
+        self.assertTupleEqual(data_asdict, (
+            {'1': 'a', '2': 'b', '3': 'c'},
+            {'1': 'x', '2': 'y', '3': 'z'},
+        ))
+
+    def test_data_asdict_keys_len_not_match(self):
+        r = Response(123, 'Foo', (
+            ('a', 'b', 'c'),
+            ('x', 'y', 'z'),
+        ))
+        with self.assertRaises(ValueError):
+            r.data_asdict(['1', '2', '3', '4', '5', '6'])
+
+
 class ClientSocketTestCase(unittest.TestCase):
     @unittest.mock.patch('yumemi.anidb.socket.socket')
     def test_init(self, *args):
