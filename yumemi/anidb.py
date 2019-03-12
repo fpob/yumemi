@@ -97,7 +97,7 @@ class Response:
     def __init__(self, code, message, data=None):
         self._code = code
         self._message = message
-        self._data = data or []
+        self._data = data or tuple()
 
     @property
     def code(self):
@@ -122,7 +122,8 @@ class Response:
         """
         Data from response.
 
-        :type: List of lists with fields or empty list on error.
+        :type: Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``)
+               or empty tuple on error.
         """
         return self._data
 
@@ -306,8 +307,8 @@ class Client:
         lines = self._codec.decode(response_bytes).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
-        data = [[self._unescape(field) for field in line.split('|')]
-                for line in lines[1:]]
+        data = tuple(tuple(self._unescape(field) for field in line.split('|'))
+                     for line in lines[1:])
 
         response = Response(code, message, data)
         if 500 <= response.code <= 599:

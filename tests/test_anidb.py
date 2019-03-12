@@ -89,7 +89,7 @@ class ClientCallTestCase(unittest.TestCase):
         c._socket.send_recv.assert_called_with(b'PING key=value')
         self.assertEqual(resp.code, 200)
         self.assertEqual(resp.message, 'OK')
-        self.assertListEqual(resp.data, [['A', 'B', 'C']])
+        self.assertTupleEqual(resp.data, (('A', 'B', 'C'), ))
 
     @unittest.mock.patch('yumemi.anidb.Socket')
     def test_multi_data(self, *args):
@@ -99,8 +99,8 @@ class ClientCallTestCase(unittest.TestCase):
         c._socket.send_recv.assert_called_with(b'PING key=value')
         self.assertEqual(resp.code, 200)
         self.assertEqual(resp.message, 'OK')
-        self.assertListEqual(resp.data, [['A', 'B', 'C'],
-                                         ['X', 'Y', 'Z']])
+        self.assertTupleEqual(resp.data, (('A', 'B', 'C'),
+                                         ('X', 'Y', 'Z')))
 
     @unittest.mock.patch('yumemi.anidb.Socket')
     def test_params_converting(self, *args):
@@ -127,7 +127,7 @@ class ClientCallTestCase(unittest.TestCase):
         c = Client()
         c._socket.send_recv.return_value = b'200 OK\nmulti<br />line|pi/pe|`apo`'
         resp = c.call('PING')
-        self.assertListEqual(resp.data, [['multi\nline', 'pi/pe', "`apo`"]])
+        self.assertTupleEqual(resp.data, (('multi\nline', 'pi/pe', "`apo`"), ))
 
 
 class ClientTestCase(unittest.TestCase):
