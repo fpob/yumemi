@@ -224,7 +224,7 @@ class Client:
     PROTOVER = 3
     CLIENT = 'yumemi'
     VERSION = 2
-    ENCODING = 'ASCII'
+    ENCODING = 'UTF-8'
 
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
