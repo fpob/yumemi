@@ -7,7 +7,7 @@ import click
 import dateutil.parser
 import dateutil.relativedelta
 
-import yumemi
+from . import __version__
 from . import anidb
 from . import exceptions
 from . import ed2k
@@ -79,7 +79,7 @@ def mylistadd_file_params(file):
 
 
 @click.command()
-@click.version_option(version=yumemi.__version__)
+@click.version_option(version=__version__)
 @click.option('--ping', is_flag=True, callback=ping, is_eager=True,
               expose_value=False, help='Test connection to AniDB API server.')
 @click.option('-u', '--username', prompt=True, envvar='USERNAME',
