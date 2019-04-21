@@ -44,7 +44,7 @@ setup(
         'Topic :: Utilities',
     ],
     packages=['yumemi'],
-    install_requires=['click'],
+    install_requires=['click', 'python-dateutil'],
     extras_require={
         'encrypt': ['pycrypto'],
     },

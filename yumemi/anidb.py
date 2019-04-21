@@ -6,6 +6,12 @@ import hashlib
 import re
 import zlib
 
+try:
+    from Crypto.Cipher import AES
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
 from .exceptions import (SocketError, SocketTimeout, ServerError, ClientError,
                          EncryptError)
 
@@ -52,7 +58,7 @@ class Socket:
         """
         with self._lock:
             if len(data) > 1400:
-                raise SocketError('Cant send more than 1400 bytes')
+                raise SocketError('Can\'t send more than 1400 bytes')
 
             delay_secs = 0
             if self._send_count.value > 2:
@@ -91,7 +97,7 @@ class Response:
     def __init__(self, code, message, data=None):
         self._code = code
         self._message = message
-        self._data = data or []
+        self._data = data or tuple()
 
     @property
     def code(self):
@@ -116,9 +122,27 @@ class Response:
         """
         Data from response.
 
-        :type: List of lists with fields or empty list on error.
+        :type: Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``)
+               or empty tuple on error.
         """
         return self._data
+
+    def data_asdict(self, keys):
+        """
+        Convert :attr:`data` to tuple of dicts.
+
+        :param: list of keys for created dicts
+
+        :returns: tuple of dicts
+
+        :raises ValueError: If number of provided keys not match number of
+                            fields in :attr:`data`
+        """
+        def fields_asdict(fields):
+            if len(keys) != len(fields):
+                raise ValueError('Number of keys not match number of fields')
+            return dict(zip(keys, fields))
+        return tuple(fields_asdict(fields) for fields in self.data)
 
     def __str__(self):
         return self._message
@@ -126,7 +150,7 @@ class Response:
 
 class Codec:
     """
-    Class for encoding and decoding strings to bytes.
+    Class for encoding and decoding strings to bytes with compression support.
 
     :param encoding: string encoding
 
@@ -161,8 +185,9 @@ class EncryptCodec(Codec):
     """
 
     def __init__(self, api_key, salt, encoding):
+        if not HAS_CRYPTO:
+            raise RuntimeError('Package `pycrypto` is not installed')
         super().__init__(encoding)
-        from Crypto.Cipher import AES
         self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
 
     def _hash_key(self, key):
@@ -188,7 +213,7 @@ class Client:
     Main class for communication with AniDB.
 
     Implements some basic commands and provides interface to use all other
-    commands.
+    commands via :meth:`call` method.
 
     This class can be used in `with` statement. ::
 
@@ -199,7 +224,7 @@ class Client:
     PROTOVER = 3
     CLIENT = 'yumemi'
     VERSION = 2
-    ENCODING = 'ASCII'
+    ENCODING = 'UTF-8'
 
     # Default connection parameters
     SERVER = ('api.anidb.net', 9000)
@@ -237,9 +262,9 @@ class Client:
         """
         Send command to AniDB and return response.
 
-        When sending command which require login session parameter 's' is
+        When sending command that require login session, parameter 's' is
         automatically set. If user is not logged in and sending some command
-        which requires login then :class:`ClientError` is raised even without
+        that requires login then :class:`ClientError` is raised even without
         sending any packet.
 
         .. note::
@@ -253,9 +278,9 @@ class Client:
         :returns: :class:`Response`
 
         :raises SocketError: socket errors
-        :raises ServerError: server side error
         :raises ClientError: client side error or when not loggen in and
-                             command require session
+                             command require session (response code 500-599)
+        :raises ServerError: server side error (response code 600-699)
 
         See:
             https://wiki.anidb.net/w/UDP_API_Definition
@@ -272,8 +297,14 @@ class Client:
                 raise ClientError.from_response(Response(501, 'LOGIN FIRST'))
             params['s'] = self._session
 
-        query = '&'.join('{}={}'.format(str(k), self._escape(str(v)))
-                         for k, v in params.items())
+        for k, v in params.items():
+            if v is None:
+                v = ''
+            elif isinstance(v, bool):
+                v = int(v)
+            params[k] = self._escape(str(v))
+
+        query = '&'.join('{}={}'.format(k, v) for k, v in params.items())
         request_bytes = self._codec.encode((command + ' ' + query).strip())
 
         response_bytes = None
@@ -293,8 +324,8 @@ class Client:
         lines = self._codec.decode(response_bytes).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
-        data = [[self._unescape(field) for field in line.split('|')]
-                for line in lines[1:]]
+        data = tuple(tuple(self._unescape(field) for field in line.split('|'))
+                     for line in lines[1:])
 
         response = Response(code, message, data)
         if 500 <= response.code <= 599:
@@ -307,6 +338,8 @@ class Client:
         """
         Test connection to server or keep connection alive.
 
+        Uses :meth:`call` with ``PING`` command.
+
         :returns: `True` if connection and server is okay, otherwise `False`
         """
         try:
@@ -318,10 +351,14 @@ class Client:
         """
         Start encrypted session.
 
+        Uses :meth:`call` with ``ENCRYPT`` command.
+
         :param api_key: API key, defined in profile settings
         :param username: user name
 
         :returns: :class:`Response`
+
+        :raises EncryptError: when encrypted session could not be established
         """
         response = self.call('ENCRYPT', {
             'user': username,
@@ -340,6 +377,8 @@ class Client:
     def auth(self, username, password):
         """
         Authorize to AniDB.
+
+        Uses :meth:`call` with ``AUTH`` command.
 
         :param username: user name
         :param password: user's password
@@ -366,6 +405,8 @@ class Client:
         """
         Change encoding for session. This command does not require session.
 
+        Uses :meth:`call` with ``ENCODING`` command.
+
         .. note::
             Encoding is reset to default ASCII on logout or on timeout.
 
@@ -385,6 +426,8 @@ class Client:
         """
         Logout from AniDB.
 
+        Uses :meth:`call` with ``LOGOUT`` command.
+
         :returns: :class:`Response`
         """
         response = self.call('LOGOUT')
@@ -395,11 +438,28 @@ class Client:
 
     def is_logged_in(self):
         """
-        Check if user is logged in (session key is set).
+        Check if user is logged in (session key is set). To check if session is
+        active use :meth:`check_session`.
 
         :returns: bool
         """
         return self._session is not None
+
+    def check_session(self):
+        """
+        Check if session is still active on server. If this method return
+        `False` then auth sequence (:meth:`encrypt`, :meth:`encoding` and
+        :meth:`auth`) must be resubmitted.
+
+        Uses :meth:`call` with ``UPTIME`` command.
+
+        .. note::
+            This method can be used to keep session alive by calling it every
+            15 minutes or so.
+
+        :returns: `True` if session is active, otherwise `False`
+        """
+        return self.call('UPTIME').code == 208
 
     def _escape(self, string):
         """AniDB content encoding (to server)."""
@@ -409,7 +469,7 @@ class Client:
 
     def _unescape(self, string):
         """AniDB content decoding (from server)."""
-        return (string
-                .replace('<br />', '\n')
-                .replace('`', "'")
-                .replace('/', '|'))
+        # Characters ` and / are not replaced because they appears in some
+        # anime or episode names so decoding them to ' and | leads to wrong
+        # results.
+        return string.replace('<br />', '\n')

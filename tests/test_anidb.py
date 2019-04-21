@@ -40,6 +40,27 @@ class CodecTestCase(unittest.TestCase):
                 self.assertEqual(c.decode(i), o)
 
 
+class ResponseTestCase(unittest.TestCase):
+    def test_data_asdict(self):
+        r = Response(123, 'Foo', (
+            ('a', 'b', 'c'),
+            ('x', 'y', 'z'),
+        ))
+        data_asdict = r.data_asdict(['1', '2', '3'])
+        self.assertTupleEqual(data_asdict, (
+            {'1': 'a', '2': 'b', '3': 'c'},
+            {'1': 'x', '2': 'y', '3': 'z'},
+        ))
+
+    def test_data_asdict_keys_len_not_match(self):
+        r = Response(123, 'Foo', (
+            ('a', 'b', 'c'),
+            ('x', 'y', 'z'),
+        ))
+        with self.assertRaises(ValueError):
+            r.data_asdict(['1', '2', '3', '4', '5', '6'])
+
+
 class ClientSocketTestCase(unittest.TestCase):
     @unittest.mock.patch('yumemi.anidb.socket.socket')
     def test_init(self, *args):
@@ -89,7 +110,7 @@ class ClientCallTestCase(unittest.TestCase):
         c._socket.send_recv.assert_called_with(b'PING key=value')
         self.assertEqual(resp.code, 200)
         self.assertEqual(resp.message, 'OK')
-        self.assertListEqual(resp.data, [['A', 'B', 'C']])
+        self.assertTupleEqual(resp.data, (('A', 'B', 'C'), ))
 
     @unittest.mock.patch('yumemi.anidb.Socket')
     def test_multi_data(self, *args):
@@ -99,8 +120,21 @@ class ClientCallTestCase(unittest.TestCase):
         c._socket.send_recv.assert_called_with(b'PING key=value')
         self.assertEqual(resp.code, 200)
         self.assertEqual(resp.message, 'OK')
-        self.assertListEqual(resp.data, [['A', 'B', 'C'],
-                                         ['X', 'Y', 'Z']])
+        self.assertTupleEqual(resp.data, (('A', 'B', 'C'),
+                                         ('X', 'Y', 'Z')))
+
+    @unittest.mock.patch('yumemi.anidb.Socket')
+    def test_params_converting(self, *args):
+        c = Client()
+        c._socket.send_recv.return_value = b'200 OK\n'
+
+        with self.subTest(type=bool):
+            c.call('PING', {'key': True})
+            c._socket.send_recv.assert_called_with(b'PING key=1')
+
+        with self.subTest(type=None):
+            c.call('PING', {'key': None})
+            c._socket.send_recv.assert_called_with(b'PING key=')
 
     @unittest.mock.patch('yumemi.anidb.Socket')
     def test_escape(self, *args):
@@ -114,7 +148,7 @@ class ClientCallTestCase(unittest.TestCase):
         c = Client()
         c._socket.send_recv.return_value = b'200 OK\nmulti<br />line|pi/pe|`apo`'
         resp = c.call('PING')
-        self.assertListEqual(resp.data, [['multi\nline', 'pi|pe', "'apo'"]])
+        self.assertTupleEqual(resp.data, (('multi\nline', 'pi/pe', "`apo`"), ))
 
 
 class ClientTestCase(unittest.TestCase):

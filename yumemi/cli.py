@@ -4,8 +4,10 @@ import re
 import time
 
 import click
+import dateutil.parser
+import dateutil.relativedelta
 
-import yumemi
+from . import __version__
 from . import anidb
 from . import exceptions
 from . import ed2k
@@ -20,47 +22,32 @@ class AnidbDate(click.ParamType):
 
     name = 'anidb_date'
 
-    FROM_STR_DATE = (
-        (re.compile(r'^(?P<dt>\d{4}-\d{2}-\d{2})$'),
-         '%Y-%m-%d'),
-        (re.compile(r'^(?P<dt>\d{4}-\d{2}-\d{2} \d{2}:\d{2})$'),
-         '%Y-%m-%d %H:%M'),
-        (re.compile(r'^(?P<dt>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})$'),
-         '%Y-%m-%d %H:%M:%S'),
-        (re.compile(r'^(?P<rel>y) (?P<dt>\d{2}:\d{2})$'),
-         '%H:%M'),
-        (re.compile(r'^(?P<rel>-\d+)d? (?P<dt>\d{2}:\d{2})$'),
-         '%H:%M'),
-    )
+    @staticmethod
+    def now():
+        return int(time.time())
 
-    @classmethod
-    def from_str(cls, date_time, _format=None):
+    @staticmethod
+    def from_str(date_time_str, _format=None):
         """Create timestamp from string."""
-        if date_time == 'now':
-            return int(time.time())
-        elif _format:
-            return int(time.mktime(time.strptime(date_time, _format)))
-        for cre, fmt in cls.FROM_STR_DATE:
-            match = cre.match(date_time)
-            if match:
-                groups = match.groupdict()
-                if 'rel' not in groups:
-                    return cls.from_str(groups['dt'], fmt)
-                # Relative date.
-                today_fmt = '%Y-%m-%d '
-                today = time.strftime(today_fmt)
-                timestamp = cls.from_str(today + groups['dt'], today_fmt + fmt)
-                rel_days = -1 if groups['rel'] == 'y' else int(groups['rel'])
-                return timestamp + rel_days * 24 * 60 * 60
-        return None
+        relative = re.match(r'^(y|-\d+d) (.*)$', date_time_str)
+        if relative:
+            dt = dateutil.parser.parse(relative.group(2))
+            if relative.group(1) == 'y':
+                dt += dateutil.relativedelta.relativedelta(days=-1)
+            else:
+                days_delta = int(relative.group(1)[:-1])
+                dt += dateutil.relativedelta.relativedelta(days=days_delta)
+        else:
+            dt = dateutil.parser.parse(date_time_str)
+        return int(dt.timestamp())
 
     def convert(self, value, param, ctx):
         if not value:
             return 0
-        date = self.from_str(value)
-        if date is None:
-            self.fail('Invalid value')
-        return date
+        try:
+            return self.from_str(value)
+        except ValueError as e:
+            self.fail(' '.join(e.args))
 
 
 def validate_username(ctx, param, value):
@@ -92,7 +79,7 @@ def mylistadd_file_params(file):
 
 
 @click.command()
-@click.version_option(version=yumemi.__version__)
+@click.version_option(version=__version__)
 @click.option('--ping', is_flag=True, callback=ping, is_eager=True,
               expose_value=False, help='Test connection to AniDB API server.')
 @click.option('-u', '--username', prompt=True, envvar='USERNAME',
@@ -104,8 +91,8 @@ def mylistadd_file_params(file):
               help='Mark files as watched.')
 @click.option('-W', '--view-date', type=AnidbDate(), default=0, metavar='DATE',
               help='Set viewdate to certain date. Implies -w/--watched.'
-              ' Formats: Y-m-d[ H:M[:S]] | y H:M (yesterday) | -#[d] H:M '
-              '(before # days).')
+              ' Formats: Y-m-d[ H:M] | H:M (today) | y H:M (yesterday)'
+              ' | -#[d] H:M (before # days).')
 @click.option('-d', '--deleted', is_flag=True, default=False,
               help='Set file state to deleted.')
 @click.option('-e', '--edit', is_flag=True, default=False,
@@ -132,7 +119,7 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
         return
 
     if watched and not view_date:
-        view_date = AnidbDate.from_str('now')
+        view_date = AnidbDate.now()
 
     if view_date:
         watched = True
@@ -146,9 +133,9 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
                 'ed2k': file_ed2k,
                 'size': file_size,
                 'state': 3 if deleted else 1,  # 1 = internal storage (hdd)
-                'viewed': int(watched),
+                'viewed': watched,
                 'viewdate': view_date,  # field will be ignored if viewed=0
-                'edit': int(edit),
+                'edit': edit,
             })
 
             if result.code in {210, 310, 311}:
