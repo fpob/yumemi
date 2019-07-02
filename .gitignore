@@ -2,8 +2,9 @@ __pycache__
 *.pyc
 .cache
 .pytest_cache
+.coverage
+.tox
 tags
-run.py
 
 # distutils files
 /MANIFEST
