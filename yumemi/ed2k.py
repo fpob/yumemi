@@ -36,7 +36,7 @@ class Ed2k:
             size = min(len(data) - pos,
                        self.chunk_size - (self._size_total % self.chunk_size))
 
-            self._md4_partial.update(data[pos:pos+size])
+            self._md4_partial.update(data[pos:pos+size])  # noqa: E226
             pos += size
             self._size_total += size
 
