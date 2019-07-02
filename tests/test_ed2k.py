@@ -1,7 +1,7 @@
 import unittest
 import tempfile
 
-from yumemi.ed2k import *
+from yumemi.ed2k import file_ed2k, parse_ed2k_link
 
 
 class FileEd2kTestCase(unittest.TestCase):
