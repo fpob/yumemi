@@ -1,0 +1,45 @@
+image: kiwicom/tox
+
+stages:
+  - test
+  - deploy
+  - cleanup
+
+test:py35:
+  stage: test
+  script:
+    - tox -e py35
+
+test:py36:
+  stage: test
+  script:
+    - tox -e py36
+
+test:py37:
+  stage: test
+  script:
+    - tox -e py37
+
+lint:
+  stage: test
+  script:
+    - tox -e flake8
+
+pypi:
+  stage: deploy
+  script:
+    - echo "[server-login]" >> ~/.pypirc
+    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
+    - echo "password=" ${PYPI_PASSWORD} >> ~/.pypirc
+    - python setup.py check sdist bdist upload
+    - echo "" > ~/.pypirc && rm ~/.pypirc
+  only:
+    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
+
+cleanup:
+  stage: cleanup
+  when: always
+  script:
+    - rm -vf ~/.pypirc
+  only:
+    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
