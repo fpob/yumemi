@@ -302,7 +302,7 @@ class Client:
                 v = ''
             elif isinstance(v, bool):
                 v = int(v)
-            params[k] = self._escape(str(v))
+            params[k] = str(v).replace('&', '&amp;').replace('\n', '<br />')
 
         query = '&'.join('{}={}'.format(k, v) for k, v in params.items())
         request_bytes = self._codec.encode((command + ' ' + query).strip())
@@ -324,8 +324,10 @@ class Client:
         lines = self._codec.decode(response_bytes).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
-        data = tuple(tuple(self._unescape(field) for field in line.split('|'))
-                     for line in lines[1:])
+        data = tuple(
+            tuple(field.replace('<br />', '\n') for field in line.split('|'))
+            for line in lines[1:]
+        )
 
         response = Response(code, message, data)
         if 500 <= response.code <= 599:
@@ -460,16 +462,3 @@ class Client:
         :returns: `True` if session is active, otherwise `False`
         """
         return self.call('UPTIME').code == 208
-
-    def _escape(self, string):
-        """AniDB content encoding (to server)."""
-        return (string
-                .replace('&', '&amp;')
-                .replace('\n', '<br />'))
-
-    def _unescape(self, string):
-        """AniDB content decoding (from server)."""
-        # Characters ` and / are not replaced because they appears in some
-        # anime or episode names so decoding them to ' and | leads to wrong
-        # results.
-        return string.replace('<br />', '\n')
