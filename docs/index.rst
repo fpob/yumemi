@@ -29,7 +29,7 @@ Install it using pip ::
 
 or clone repository ::
 
-    git clone https://github.com/fpob/yumemi
+    git clone https://gitlab.com/fpob/yumemi.git
     cd yumemi
 
 and install Python package including dependencies ::

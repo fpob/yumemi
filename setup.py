@@ -25,8 +25,8 @@ setup(
     long_description=long_description,
     author='Filip Pobořil',
     author_email='tsuki@fpob.cz',
-    url='https://github.com/fpob/yumemi',
-    download_url='https://github.com/fpob/yumemi/archive/v{}.tar.gz'.format(version),
+    url='https://gitlab.com/fpob/yumemi',
+    download_url='https://gitlab.com/fpob/yumemi/-/archive/v{v}/yumemi-v{v}.zip'.format(v=version),
     license='MIT',
     keywords=['AniDB'],
     classifiers=[
