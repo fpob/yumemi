@@ -4,7 +4,7 @@
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
-SPHINXPROJ    = Logicoma
+SPHINXPROJ    = Yumemi
 SOURCEDIR     = .
 BUILDDIR      = _build
 
