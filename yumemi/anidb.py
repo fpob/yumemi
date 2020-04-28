@@ -194,18 +194,20 @@ class EncryptCodec(Codec):
         return hashlib.new('md5', key.encode(self.encoding)).digest()
 
     def _pad(self, data):
-        return data + (16 - len(data) % 16) * chr(16 - len(data) % 16)
+        """Pad bytes data for encrypting."""
+        return data + (16 - len(data) % 16) * bytes([16 - len(data) % 16])
 
     def _unpad(self, data):
-        return data[0:-ord(data[-1])]
+        """Unpad bytes data after decrypting."""
+        return data[0:-data[-1]]
 
     def encode(self, data):
         """Encode given string data to bytes and encrypt them."""
-        return self._aes.encrypt(super().encode(self._pad(data)))
+        return self._aes.encrypt(self._pad(super().encode(data)))
 
     def decode(self, data):
         """Decode data from given bytes to string and decrypt them."""
-        return self._unpad(super().decode(self._aes.decrypt(data)))
+        return super().decode(self._unpad(self._aes.decrypt(data)))
 
 
 class Client:
