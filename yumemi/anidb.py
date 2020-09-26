@@ -184,30 +184,32 @@ class EncryptCodec(Codec):
     :ivar encoding: string encoding
     """
 
-    def __init__(self, api_key, salt, encoding):
+    def __init__(self, key, encoding):
         if not HAS_CRYPTO:
             raise RuntimeError('Package `pycrypto` is not installed')
         super().__init__(encoding)
-        self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
+        self._aes = AES.new(self._hash_key(key), AES.MODE_ECB)
 
     def _hash_key(self, key):
         return hashlib.new('md5', key.encode(self.encoding)).digest()
 
-    def _pad(self, data):
+    def _encrypt(self, data):
         """Pad bytes data for encrypting."""
-        return data + (16 - len(data) % 16) * bytes([16 - len(data) % 16])
+        data += (16 - len(data) % 16) * bytes([16 - len(data) % 16])
+        return self._aes.encrypt(data)
 
-    def _unpad(self, data):
+    def _decrypt(self, data):
         """Unpad bytes data after decrypting."""
-        return data[0:-data[-1]]
+        data = self._aes.decrypt(data)
+        return data[:-data[-1]]
 
     def encode(self, data):
         """Encode given string data to bytes and encrypt them."""
-        return self._aes.encrypt(self._pad(super().encode(data)))
+        return self._encrypt(super().encode(data))
 
     def decode(self, data):
         """Decode data from given bytes to string and decrypt them."""
-        return super().decode(self._unpad(self._aes.decrypt(data)))
+        return super().decode(self._decrypt(data))
 
 
 class Client:
@@ -235,11 +237,9 @@ class Client:
     # Valid username regex.
     USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
 
-    def __init__(self, server=None, localport=None,
-                 session=None, encoding=None):
-        self._socket = Socket(server or self.SERVER,
-                              localport or self.LOCALPORT)
-        self._codec = Codec(encoding=encoding or self.ENCODING)
+    def __init__(self, server=None, localport=None, session=None, encoding=None):
+        self._socket = Socket(server or self.SERVER, localport or self.LOCALPORT)
+        self._codec = Codec(encoding or self.ENCODING)
         self._session = session
 
     def __enter__(self):
@@ -371,8 +371,7 @@ class Client:
 
         if response.code == 209:
             salt, _ = response.message.split(' ', maxsplit=1)
-            self._codec = EncryptCodec(api_key, salt,
-                                       encoding=self._codec.encoding)
+            self._codec = EncryptCodec(api_key + salt, self._codec.encoding)
         elif response.code in {309, 394}:
             raise EncryptError.from_response(response)
 
@@ -418,7 +417,8 @@ class Client:
 
         :returns: `True` if encoding was changed, otherwise `False`
 
-        List of supported encodings: http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html
+        List of supported encodings:
+            http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html
         """
         response = self.call('ENCODING', {'name': encoding})
         if response.code == 219:
@@ -437,7 +437,7 @@ class Client:
         response = self.call('LOGOUT')
         if response.code == 203:
             self._session = None
-            self._codec = Codec(encoding=self.ENCODING)
+            self._codec = Codec(self.ENCODING)
         return response
 
     def is_logged_in(self):
