@@ -39,9 +39,7 @@ class Socket:
 
     def send_recv(self, data):
         """
-        Send some bytes to AniDB and receive some bytes (joins
-        :meth:`socket.socket.sendto` and :meth:`socket.socket.recv` to one
-        method).
+        Send data to AniDB and wait for and return response from AniDB.
 
         Data length is limited to 1400 bytes and if this limit is exceeded,
         :class:`SocketError` is raised.
@@ -53,6 +51,10 @@ class Socket:
         .. note::
             This method is thread safe.
 
+        :param data: data to send to AniDB
+        :type data: bytes
+        :return: response from AniDB, note that reponse may be copressed or encrypted
+        :rtype: bytes
         :raises SocketError: when data size is greater than 1400 bytes
         :raises SocketTimeout: on socket timeout, server is probably down
         """
@@ -122,8 +124,10 @@ class Response:
         """
         Data from response.
 
-        :type: Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``)
-               or empty tuple on error.
+        Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``) or empty
+        tuple on error.
+
+        :type: tuple
         """
         return self._data
 
@@ -132,8 +136,6 @@ class Response:
         Convert :attr:`data` to tuple of dicts.
 
         :param: list of keys for created dicts
-
-        :returns: tuple of dicts
 
         :raises ValueError: If number of provided keys not match number of
                             fields in :attr:`data`
@@ -274,10 +276,14 @@ class Client:
             `self`.
 
         :param command: AniDB command, case insensitive
-        :param params: dict with command parameters
-        :param retry: if command fails then retry N times
+        :type command: str
+        :param params: command parameters
+        :type params: dict
+        :param retry: number of retries
+        :type retry: int
 
-        :returns: :class:`Response`
+        :returns: decoded and parsed response from AniDB
+        :rtype: :class:`Response`
 
         :raises SocketError: socket errors
         :raises ClientError: client side error or when not loggen in and
