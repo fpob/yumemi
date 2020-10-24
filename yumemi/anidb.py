@@ -93,63 +93,6 @@ class Socket:
                     self._drop_count.value -= 1
 
 
-class Response:
-    """Class which wraps data from response."""
-
-    def __init__(self, code, message, data=None):
-        self._code = code
-        self._message = message
-        self._data = data or tuple()
-
-    @property
-    def code(self):
-        """
-        Response code.
-
-        :type: int
-        """
-        return self._code
-
-    @property
-    def message(self):
-        """
-        Textual representation of response code.
-
-        :type: str
-        """
-        return self._message
-
-    @property
-    def data(self):
-        """
-        Data from response.
-
-        Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``) or empty
-        tuple on error.
-
-        :type: tuple
-        """
-        return self._data
-
-    def data_asdict(self, keys):
-        """
-        Convert :attr:`data` to tuple of dicts.
-
-        :param: list of keys for created dicts
-
-        :raises ValueError: If number of provided keys not match number of
-                            fields in :attr:`data`
-        """
-        def fields_asdict(fields):
-            if len(keys) != len(fields):
-                raise ValueError('Number of keys not match number of fields')
-            return dict(zip(keys, fields))
-        return tuple(fields_asdict(fields) for fields in self.data)
-
-    def __str__(self):
-        return self._message
-
-
 class Codec:
     """
     Class for encoding and decoding strings to bytes with compression support.
@@ -212,6 +155,63 @@ class EncryptCodec(Codec):
     def decode(self, data):
         """Decode data from given bytes to string and decrypt them."""
         return super().decode(self._decrypt(data))
+
+
+class Response:
+    """Class which wraps data from response."""
+
+    def __init__(self, code, message, data=None):
+        self._code = code
+        self._message = message
+        self._data = data or tuple()
+
+    @property
+    def code(self):
+        """
+        Response code.
+
+        :type: int
+        """
+        return self._code
+
+    @property
+    def message(self):
+        """
+        Textual representation of response code.
+
+        :type: str
+        """
+        return self._message
+
+    @property
+    def data(self):
+        """
+        Data from response.
+
+        Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``) or empty
+        tuple on error.
+
+        :type: tuple
+        """
+        return self._data
+
+    def data_asdict(self, keys):
+        """
+        Convert :attr:`data` to tuple of dicts.
+
+        :param: list of keys for created dicts
+
+        :raises ValueError: If number of provided keys not match number of
+                            fields in :attr:`data`
+        """
+        def fields_asdict(fields):
+            if len(keys) != len(fields):
+                raise ValueError('Number of keys not match number of fields')
+            return dict(zip(keys, fields))
+        return tuple(fields_asdict(fields) for fields in self.data)
+
+    def __str__(self):
+        return self._message
 
 
 class Client:
