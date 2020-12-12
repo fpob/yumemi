@@ -3,7 +3,6 @@ image: robert96/tox
 stages:
   - test
   - deploy
-  - cleanup
 
 test:py36:
   stage: test
@@ -37,18 +36,8 @@ lint:
 pypi:
   stage: deploy
   script:
-    - echo "[server-login]" >> ~/.pypirc
-    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
-    - echo "password=" ${PYPI_PASSWORD} >> ~/.pypirc
-    - python setup.py check sdist bdist upload
-    - echo "" > ~/.pypirc && rm ~/.pypirc
-  only:
-    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
-
-cleanup:
-  stage: cleanup
-  when: always
-  script:
-    - rm -vf ~/.pypirc
+    - python3.6 -m pip install twine wheel
+    - python3.6 setup.py sdist bdist_wheel
+    - python3.6 -m twine upload dist/*
   only:
     - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
