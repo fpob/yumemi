@@ -25,9 +25,9 @@ test:py39:
   script:
     - tox -e py39
 
-test:pypy3:
+test:pypy36:
   script:
-    - tox -e pypy3
+    - tox -e pypy36
 
 lint:
   stage: test
