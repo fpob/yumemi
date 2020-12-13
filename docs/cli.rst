@@ -4,14 +4,12 @@ CLI
 Add files to mylist
 -------------------
 
-With library is also installed simple script to add files to mylist
-
-.. code-block:: none
+With library is also installed simple script to add files to mylist ::
 
    Usage: yumemi [OPTIONS] FILES...
-   
+
      AniDB client for adding files to mylist.
-   
+
    Options:
      --version             Show the version and exit.
      --ping                Test connection to AniDB API server.
