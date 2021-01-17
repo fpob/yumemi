@@ -131,7 +131,7 @@ class EncryptCodec(Codec):
 
     def __init__(self, key, encoding):
         if not HAS_CRYPTO:
-            raise RuntimeError('Package `pycrypto` is not installed')
+            raise EncryptError('Package `pycrypto` is not installed')
         super().__init__(encoding)
         self._aes = AES.new(self._hash_key(key), AES.MODE_ECB)
 
