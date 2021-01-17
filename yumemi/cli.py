@@ -113,10 +113,10 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
             click.secho('New version available', bold=True)
     except exceptions.SocketTimeout:
         click.secho('AniDB API server is unavailable', fg='red', err=True)
-        return
+        raise click.Abort
     except exceptions.AnidbError as e:
         click.secho(str(e), fg='red', err=True)
-        return
+        raise click.Abort
 
     if watched and not view_date:
         view_date = AnidbDate.now()
