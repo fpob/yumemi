@@ -29,7 +29,7 @@ class AnidbDate(click.ParamType):
     @staticmethod
     def from_str(date_time_str, _format=None):
         """Create timestamp from string."""
-        relative = re.match(r'^(y|-\d+d) (.*)$', date_time_str)
+        relative = re.match(r'^(y|-\d+d?) (.*)$', date_time_str)
         if relative:
             dt = dateutil.parser.parse(relative.group(2))
             if relative.group(1) == 'y':
