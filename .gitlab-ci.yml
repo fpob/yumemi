@@ -44,4 +44,4 @@ pypi:
     - python3 setup.py sdist bdist_wheel
     - twine upload dist/*
   only:
-    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
+    - '/^v\d+\.\d+(\.\d+)?([abc]\d*)?$/'  # PEP-440 compliant
