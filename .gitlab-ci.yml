@@ -1,8 +1,10 @@
-image: robert96/tox
-
 stages:
   - test
   - deploy
+
+default:
+  image: robert96/tox
+
 
 test:py36:
   stage: test
@@ -25,6 +27,7 @@ test:py39:
     - tox -e py39
 
 test:pypy36:
+  stage: test
   script:
     - tox -e pypy36
 
@@ -35,9 +38,10 @@ lint:
 
 pypi:
   stage: deploy
+  image: python:3.6
   script:
-    - python3.6 -m pip install twine wheel
-    - python3.6 setup.py sdist bdist_wheel
-    - python3.6 -m twine upload dist/*
+    - pip3 install twine wheel
+    - python3 setup.py sdist bdist_wheel
+    - twine upload dist/*
   only:
     - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
