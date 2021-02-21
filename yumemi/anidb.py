@@ -39,9 +39,7 @@ class Socket:
 
     def send_recv(self, data):
         """
-        Send some bytes to AniDB and receive some bytes (joins
-        :meth:`socket.socket.sendto` and :meth:`socket.socket.recv` to one
-        method).
+        Send data to AniDB and wait for and return response from AniDB.
 
         Data length is limited to 1400 bytes and if this limit is exceeded,
         :class:`SocketError` is raised.
@@ -53,6 +51,10 @@ class Socket:
         .. note::
             This method is thread safe.
 
+        :param data: data to send to AniDB
+        :type data: bytes
+        :return: response from AniDB, note that reponse may be copressed or encrypted
+        :rtype: bytes
         :raises SocketError: when data size is greater than 1400 bytes
         :raises SocketTimeout: on socket timeout, server is probably down
         """
@@ -91,63 +93,6 @@ class Socket:
                     self._drop_count.value -= 1
 
 
-class Response:
-    """Class which wraps data from response."""
-
-    def __init__(self, code, message, data=None):
-        self._code = code
-        self._message = message
-        self._data = data or tuple()
-
-    @property
-    def code(self):
-        """
-        Response code.
-
-        :type: int
-        """
-        return self._code
-
-    @property
-    def message(self):
-        """
-        Textual representation of response code.
-
-        :type: str
-        """
-        return self._message
-
-    @property
-    def data(self):
-        """
-        Data from response.
-
-        :type: Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``)
-               or empty tuple on error.
-        """
-        return self._data
-
-    def data_asdict(self, keys):
-        """
-        Convert :attr:`data` to tuple of dicts.
-
-        :param: list of keys for created dicts
-
-        :returns: tuple of dicts
-
-        :raises ValueError: If number of provided keys not match number of
-                            fields in :attr:`data`
-        """
-        def fields_asdict(fields):
-            if len(keys) != len(fields):
-                raise ValueError('Number of keys not match number of fields')
-            return dict(zip(keys, fields))
-        return tuple(fields_asdict(fields) for fields in self.data)
-
-    def __str__(self):
-        return self._message
-
-
 class Codec:
     """
     Class for encoding and decoding strings to bytes with compression support.
@@ -184,28 +129,89 @@ class EncryptCodec(Codec):
     :ivar encoding: string encoding
     """
 
-    def __init__(self, api_key, salt, encoding):
+    def __init__(self, key, encoding):
         if not HAS_CRYPTO:
-            raise RuntimeError('Package `pycrypto` is not installed')
+            raise EncryptError('Package `pycrypto` is not installed')
         super().__init__(encoding)
-        self._aes = AES.new(self._hash_key(api_key + salt), AES.MODE_ECB)
+        self._aes = AES.new(self._hash_key(key), AES.MODE_ECB)
 
     def _hash_key(self, key):
         return hashlib.new('md5', key.encode(self.encoding)).digest()
 
-    def _pad(self, data):
-        return data + (16 - len(data) % 16) * chr(16 - len(data) % 16)
+    def _encrypt(self, data):
+        """Pad bytes data for encrypting."""
+        data += (16 - len(data) % 16) * bytes([16 - len(data) % 16])
+        return self._aes.encrypt(data)
 
-    def _unpad(self, data):
-        return data[0:-ord(data[-1])]
+    def _decrypt(self, data):
+        """Unpad bytes data after decrypting."""
+        data = self._aes.decrypt(data)
+        return data[:-data[-1]]
 
     def encode(self, data):
         """Encode given string data to bytes and encrypt them."""
-        return self._aes.encrypt(super().encode(self._pad(data)))
+        return self._encrypt(super().encode(data))
 
     def decode(self, data):
         """Decode data from given bytes to string and decrypt them."""
-        return self._unpad(super().decode(self._aes.decrypt(data)))
+        return super().decode(self._decrypt(data))
+
+
+class Response:
+    """Class which wraps data from response."""
+
+    def __init__(self, code, message, data=None):
+        self._code = code
+        self._message = message
+        self._data = data or tuple()
+
+    @property
+    def code(self):
+        """
+        Response code.
+
+        :type: int
+        """
+        return self._code
+
+    @property
+    def message(self):
+        """
+        Textual representation of response code.
+
+        :type: str
+        """
+        return self._message
+
+    @property
+    def data(self):
+        """
+        Data from response.
+
+        Tuple of tuples with fields (``tuple[tuple[str, ...], ...]``) or empty
+        tuple on error.
+
+        :type: tuple
+        """
+        return self._data
+
+    def data_asdict(self, keys):
+        """
+        Convert :attr:`data` to tuple of dicts.
+
+        :param: list of keys for created dicts
+
+        :raises ValueError: If number of provided keys not match number of
+                            fields in :attr:`data`
+        """
+        def fields_asdict(fields):
+            if len(keys) != len(fields):
+                raise ValueError('Number of keys not match number of fields')
+            return dict(zip(keys, fields))
+        return tuple(fields_asdict(fields) for fields in self.data)
+
+    def __str__(self):
+        return self._message
 
 
 class Client:
@@ -223,7 +229,7 @@ class Client:
 
     PROTOVER = 3
     CLIENT = 'yumemi'
-    VERSION = 2
+    VERSION = 3
     ENCODING = 'UTF-8'
 
     # Default connection parameters
@@ -233,11 +239,9 @@ class Client:
     # Valid username regex.
     USERNAME_CRE = re.compile(r'^[a-zA-Z0-9_-]{3,16}$')
 
-    def __init__(self, server=None, localport=None,
-                 session=None, encoding=None):
-        self._socket = Socket(server or self.SERVER,
-                              localport or self.LOCALPORT)
-        self._codec = Codec(encoding=encoding or self.ENCODING)
+    def __init__(self, server=None, localport=None, session=None, encoding=None):
+        self._socket = Socket(server or self.SERVER, localport or self.LOCALPORT)
+        self._codec = Codec(encoding or self.ENCODING)
         self._session = session
 
     def __enter__(self):
@@ -272,10 +276,14 @@ class Client:
             `self`.
 
         :param command: AniDB command, case insensitive
-        :param params: dict with command parameters
-        :param retry: if command fails then retry N times
+        :type command: str
+        :param params: command parameters
+        :type params: dict
+        :param retry: number of retries
+        :type retry: int
 
-        :returns: :class:`Response`
+        :returns: decoded and parsed response from AniDB
+        :rtype: :class:`Response`
 
         :raises SocketError: socket errors
         :raises ClientError: client side error or when not loggen in and
@@ -302,7 +310,7 @@ class Client:
                 v = ''
             elif isinstance(v, bool):
                 v = int(v)
-            params[k] = self._escape(str(v))
+            params[k] = str(v).replace('&', '&amp;').replace('\n', '<br />')
 
         query = '&'.join('{}={}'.format(k, v) for k, v in params.items())
         request_bytes = self._codec.encode((command + ' ' + query).strip())
@@ -324,8 +332,10 @@ class Client:
         lines = self._codec.decode(response_bytes).splitlines()
         code, message = lines[0].split(' ', maxsplit=1)
         code = int(code)
-        data = tuple(tuple(self._unescape(field) for field in line.split('|'))
-                     for line in lines[1:])
+        data = tuple(
+            tuple(field.replace('<br />', '\n') for field in line.split('|'))
+            for line in lines[1:]
+        )
 
         response = Response(code, message, data)
         if 500 <= response.code <= 599:
@@ -367,8 +377,7 @@ class Client:
 
         if response.code == 209:
             salt, _ = response.message.split(' ', maxsplit=1)
-            self._codec = EncryptCodec(api_key, salt,
-                                       encoding=self._codec.encoding)
+            self._codec = EncryptCodec(api_key + salt, self._codec.encoding)
         elif response.code in {309, 394}:
             raise EncryptError.from_response(response)
 
@@ -414,7 +423,8 @@ class Client:
 
         :returns: `True` if encoding was changed, otherwise `False`
 
-        List of supported encodings: http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html
+        List of supported encodings:
+            http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html
         """
         response = self.call('ENCODING', {'name': encoding})
         if response.code == 219:
@@ -433,7 +443,7 @@ class Client:
         response = self.call('LOGOUT')
         if response.code == 203:
             self._session = None
-            self._codec = Codec(encoding=self.ENCODING)
+            self._codec = Codec(self.ENCODING)
         return response
 
     def is_logged_in(self):
@@ -460,16 +470,3 @@ class Client:
         :returns: `True` if session is active, otherwise `False`
         """
         return self.call('UPTIME').code == 208
-
-    def _escape(self, string):
-        """AniDB content encoding (to server)."""
-        return (string
-                .replace('&', '&amp;')
-                .replace('\n', '<br />'))
-
-    def _unescape(self, string):
-        """AniDB content decoding (from server)."""
-        # Characters ` and / are not replaced because they appears in some
-        # anime or episode names so decoding them to ' and | leads to wrong
-        # results.
-        return string.replace('<br />', '\n')

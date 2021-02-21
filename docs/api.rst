@@ -13,13 +13,13 @@ AniDB
 .. autoclass:: yumemi.Socket
    :members:
 
-.. autoclass:: yumemi.Response
-   :members:
-
 .. autoclass:: yumemi.Codec
    :members:
 
 .. autoclass:: yumemi.EncryptCodec
+   :members:
+
+.. autoclass:: yumemi.Response
    :members:
 
 .. autoclass:: yumemi.Client

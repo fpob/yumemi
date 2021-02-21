@@ -2,16 +2,16 @@ Yumemi
 ======
 
 AniDB library for Python and simple CLI client. Also provides functions to
-calculate ed2k hash.
+calculate ed2k hashes.
 
 .. code:: python
 
     client = yumemi.Client()
     client.auth('login', '*****')
-    
+
     response = client.call('ANIME', {'aid': 11829})
     # ...
-    
+
     ed2k_hash = yumemi.ed2k.file_ed2k('/tmp/foo')
     # ...
 
@@ -23,9 +23,9 @@ Command line client can only test connection to the API server and add files to
 mylist. Thats all, nothing else will be added, i think. ::
 
    Usage: yumemi [OPTIONS] FILES...
-   
+
      AniDB client for adding files to mylist.
-   
+
    Options:
      --version             Show the version and exit.
      --ping                Test connection to AniDB API server.
@@ -64,18 +64,9 @@ Install it using pip ::
 
     pip3 install yumemi
 
-or clone repository ::
+or optionally with encrypt support ::
 
-    git clone https://github.com/fpob/yumemi
-    cd yumemi
-
-and install Python package including dependencies ::
-
-    python3 setup.py install
-
-To use optional encryption, package ``pycrypto`` must be installed ::
-
-    pip3 install pycrypto
+    pip3 install yumemi[encrypt]
 
 
 Documentation

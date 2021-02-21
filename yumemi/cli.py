@@ -29,7 +29,7 @@ class AnidbDate(click.ParamType):
     @staticmethod
     def from_str(date_time_str, _format=None):
         """Create timestamp from string."""
-        relative = re.match(r'^(y|-\d+d) (.*)$', date_time_str)
+        relative = re.match(r'^(y|-\d+d?) (.*)$', date_time_str)
         if relative:
             dt = dateutil.parser.parse(relative.group(2))
             if relative.group(1) == 'y':
@@ -113,10 +113,10 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
             click.secho('New version available', bold=True)
     except exceptions.SocketTimeout:
         click.secho('AniDB API server is unavailable', fg='red', err=True)
-        return
+        raise click.Abort
     except exceptions.AnidbError as e:
         click.secho(str(e), fg='red', err=True)
-        return
+        raise click.Abort
 
     if watched and not view_date:
         view_date = AnidbDate.now()

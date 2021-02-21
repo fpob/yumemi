@@ -9,16 +9,16 @@ Nearly all documentation in one example...
 
     client = yumemi.Client()
 
+    # Check if API is OK.
+    if not client.ping():
+        print('AniDB is DOWN')
+
     # Login with your AniDB credentials.
     client.auth('my-username', 'my-password')
 
     # Optionally encrypt connection. Parameter is "UDP API key", you can find
     # that in Settings > Account.
     client.encrypt('udp-api-key')
-
-    # Check if API is OK.
-    if not client.ping():
-        print('AniDB is DOWN')
 
     # Send some commands...
     response = client.call('ANIME', {'aid': 11829})

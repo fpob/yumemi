@@ -1,0 +1,47 @@
+stages:
+  - test
+  - deploy
+
+default:
+  image: robert96/tox
+
+
+test:py36:
+  stage: test
+  script:
+    - tox -e py36
+
+test:py37:
+  stage: test
+  script:
+    - tox -e py37
+
+test:py38:
+  stage: test
+  script:
+    - tox -e py38
+
+test:py39:
+  stage: test
+  script:
+    - tox -e py39
+
+test:pypy36:
+  stage: test
+  script:
+    - tox -e pypy36
+
+lint:
+  stage: test
+  script:
+    - tox -e flake8
+
+pypi:
+  stage: deploy
+  image: python:3.6
+  script:
+    - pip3 install twine wheel
+    - python3 setup.py sdist bdist_wheel
+    - twine upload dist/*
+  only:
+    - /^v\d+\.\d+\.\d+([abc]\d*)?$/  # PEP-440 compliant
