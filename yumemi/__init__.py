@@ -1,4 +1,4 @@
-__version__ = '1.2'
+__version__ = '1.3'
 
 from .exceptions import *
 from .anidb import *
