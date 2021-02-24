@@ -3,7 +3,7 @@ stages:
   - deploy
 
 default:
-  image: robert96/tox
+  image: registry.gitlab.com/fpob/tox-docker
 
 
 test:py36:
