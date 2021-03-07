@@ -78,7 +78,12 @@ def mylistadd_file_params(file):
     return file, ed2k.file_ed2k(file), os.path.getsize(file)
 
 
-@click.command()
+@click.command(
+    context_settings=dict(
+        help_option_names=['-h', '--help'],
+        auto_envvar_prefix='YUMEMI',
+    ),
+)
 @click.version_option(version=__version__)
 @click.option('--ping', is_flag=True, callback=ping, is_eager=True,
               expose_value=False, help='Test connection to AniDB API server.')
@@ -101,8 +106,8 @@ def mylistadd_file_params(file):
               help='Number of adding processes. Default is CPU count.')
 @click.argument('files', nargs=-1, required=True,
                 type=click.Path(exists=True, dir_okay=False))
-def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
-        files):
+def main(username, password, watched, view_date, deleted, edit, jobs, encrypt,
+         files):
     """AniDB client for adding files to mylist."""
     client = anidb.Client()
     try:
@@ -153,12 +158,6 @@ def cli(username, password, watched, view_date, deleted, edit, jobs, encrypt,
     mp_pool.join()
 
     client.logout()
-
-
-def main():
-    # pylint: disable=unexpected-keyword-arg,no-value-for-parameter
-    cli(help_option_names=['-h', '--help'],
-        auto_envvar_prefix='YUMEMI')
 
 
 if __name__ == '__main__':
