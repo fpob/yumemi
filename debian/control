@@ -1,0 +1,22 @@
+Source: yumemi
+Section: misc
+Priority: optional
+Maintainer: Filip Pobořil <tsuki@fpob.cz>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-setuptools, python3-all,
+ python3-click-man
+Standards-Version: 4.5.1
+Homepage: https://gitlab.com/fpob/yumemi
+Rules-Requires-Root: no
+
+Package: python3-yumemi
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}
+Suggests: python3-crypto
+Description: AniDB library for Python and simple CLI client (Python 3)
+ AniDB library for Python and simple CLI client. Also provides functions to
+ calculate ed2k hashes.
+ .
+ Command line client can only test connection to the API server and add files
+ to mylist. Thats all, nothing else will be added, i think.
+ .
+ This package installs the library for Python 3.

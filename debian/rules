@@ -1,0 +1,14 @@
+#!/usr/bin/make -f
+#export DH_VERBOSE = 1
+
+export PYBUILD_NAME=yumemi
+export PYBUILD_TEST_PYTEST=1
+export PYBUILD_TEST_ARGS=-c.
+
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+override_dh_installman:
+	python3 setup.py --command-packages=click_man.commands \
+		man_pages --target debian/tmp/manpages
+	dh_installman -O--buildsystem=pybuild
