@@ -2,46 +2,52 @@ stages:
   - test
   - deploy
 
-default:
-  image: registry.gitlab.com/fpob/tox-docker
-
-
-test:py36:
+pytest:
+  image: docker.io/fpob/poetry:$TAG
   stage: test
   script:
-    - tox -e py36
+    - apt update && apt install -y librhash0
+    - poetry install
+    - poetry run poe pytest
+  parallel:
+    matrix:
+      - TAG:
+          - py39
+          - py310
+          - py311
+          - pypy39
 
-test:py37:
+mypy:
+  image: docker.io/fpob/poetry:latest
   stage: test
   script:
-    - tox -e py37
+    - poetry install
+    - poetry run poe mypy
 
-test:py38:
+flake8:
+  image: docker.io/fpob/poetry:latest
   stage: test
   script:
-    - tox -e py38
+    - poetry install
+    - poetry run poe flake8
 
-test:py39:
-  stage: test
-  script:
-    - tox -e py39
-
-test:pypy36:
-  stage: test
-  script:
-    - tox -e pypy36
-
-lint:
-  stage: test
-  script:
-    - tox -e flake8
-
-pypi:
+pages:
+  image: docker.io/fpob/poetry:latest
   stage: deploy
-  image: python:3.6
   script:
-    - pip3 install twine wheel
-    - python3 setup.py sdist bdist_wheel
-    - twine upload dist/*
-  only:
-    - '/^v\d+\.\d+(\.\d+)?([abc]\d*)?$/'  # PEP-440 compliant
+    - poetry install
+    - poetry run poe docs
+    - mv build/docs public
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'
+
+package:
+  image: docker.io/fpob/poetry:latest
+  stage: deploy
+  script:
+    - poetry publish --build --repository
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^\d+\.\d+\.\d+$/'

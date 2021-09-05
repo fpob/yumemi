@@ -1,0 +1,76 @@
+[tool.poetry]
+name = "yumemi"
+version = "2.0.0.dev0"
+description = "AniDB library and simple CLI client."
+readme = "README.rst"
+authors = ["Filip Pobořil <tsuki@fpob.cz>"]
+license = "MIT"
+repository = "https://gitlab.com/fpob-dev/yumemi"
+documentation = "https://fpob-dev.gitlab.io/yumemi/"
+keywords = ["AniDB"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+  "Topic :: Utilities",
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+click = "^8.1"
+attrs = "^22.1"
+cryptography = "^38.0"
+rhash-rhash = "^1.1"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.0"
+pytest-mock = "^3.10.0"
+mypy = "^0.991"
+pyproject-flake8 = "^6.0.0"
+flake8-bugbear = "^22.12.6"
+flake8-isort = "^5.0.3"
+isort = "^5.10.1"
+furo = "^2022.12.7"
+sphinx = "^5.3.0"
+sphinx-click = "^4.4.0"
+poethepoet = "^0.16.5"
+
+[tool.poetry.scripts]
+yumemi = "yumemi.cli:main"
+
+
+[tool.poe.tasks]
+pytest = "pytest"
+mypy = "mypy src"
+flake8 = "pflake8 src tests"
+isort = "isort src tests"
+docs = "sphinx-build -a docs build/docs"
+
+
+[tool.pytest.ini_options]
+addopts = "-ra -v"
+
+
+[tool.mypy]
+ignore_missing_imports = true
+check_untyped_defs = true
+namespace_packages = true
+install_types = true
+non_interactive = true
+
+
+[tool.flake8]
+max-line-length = 80
+select = "C,E,F,W,B,B950,I"
+ignore = "W503,E501"
+
+
+[tool.isort]
+lines_after_imports = 2
+line_length = 88
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

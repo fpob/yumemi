@@ -1,15 +1,14 @@
+# python cache
 __pycache__
 *.pyc
+
+# tools cache
 .cache
 .pytest_cache
+.mypy_cache
 .coverage
 .tox
-tags
 
-# distutils files
-/MANIFEST
+# build outputs
 /build/
 /dist/
-/*.egg-info/
-
-/docs/_build

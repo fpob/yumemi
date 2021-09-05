@@ -1,72 +1,47 @@
 API
 ===
 
-AniDB UDP API is well documented at `AniDB Wiki`_.
+Reference
+---------
 
-.. _AniDB Wiki: https://wiki.anidb.net/w/UDP_API_Definition
-
-AniDB
------
-
-.. automodule:: yumemi.anidb
-
-.. autoclass:: yumemi.Socket
+.. automodule:: yumemi
    :members:
-
-.. autoclass:: yumemi.Codec
-   :members:
-
-.. autoclass:: yumemi.EncryptCodec
-   :members:
-
-.. autoclass:: yumemi.Response
-   :members:
-
-.. autoclass:: yumemi.Client
-   :members:
-   :special-members: __call__
-
-
-Exceptions
-^^^^^^^^^^
-
-.. automodule:: yumemi.exceptions
-
-.. autoclass:: yumemi.AnidbError
-   :show-inheritance:
-
-.. autoclass:: yumemi.SocketError
-   :show-inheritance:
-
-.. autoclass:: yumemi.SocketTimeout
-   :show-inheritance:
-
-.. autoclass:: yumemi.AnidbApiError
-   :show-inheritance:
-   :members:
-
-.. autoclass:: yumemi.ServerError
-   :show-inheritance:
-
-.. autoclass:: yumemi.ClientError
-   :show-inheritance:
-
-.. autoclass:: yumemi.EncryptError
+   :undoc-members:
    :show-inheritance:
 
 
-Ed2k
-----
+Example
+-------
 
-.. automodule:: yumemi.ed2k
+.. code-block:: python
 
-.. note::
-   This module is not automatically imported with `yumemi`.
+    import yumemi
 
-.. autoclass:: yumemi.ed2k.Ed2k
+    # Your client name and version, create on https://anidb.net/software
+    client = yumemi.Client('example', 1)
 
-.. autofunction:: yumemi.ed2k.file_ed2k
+    # Check if API is OK
+    if not client.ping():
+        print('AniDB is DOWN')
+        exit(1)
 
-.. autofunction:: yumemi.ed2k.file_ed2k_link
+    # Optionaly encrypt connection
+    client.encrypt('my-username', 'udp-api-key')
 
-.. autofunction:: yumemi.ed2k.parse_ed2k_link
+    # Login to AniDB
+    client.auth('my-username', 'my-password')
+
+    # Send some commands...
+    result = client.command('ANIME', {'aid': 11829})
+    if result.code == 230:
+        aid = result.data[0][0]
+        year = result.data[0][10]
+        name = result.data[0][12]
+        print(f'{name} (a{aid}) @ {year}')
+    else:
+        print(f'Error: {result.message}')
+
+    # ... Send more commands...
+
+    # And logout at the end
+    client.logout()
