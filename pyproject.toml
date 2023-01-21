@@ -15,6 +15,7 @@ classifiers = [
   "Intended Audience :: End Users/Desktop",
   "Topic :: Utilities",
 ]
+include = ["tests", "docs"]
 
 [tool.poetry.dependencies]
 python = "^3.9"
