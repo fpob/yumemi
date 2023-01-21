@@ -35,6 +35,7 @@ pages:
   image: docker.io/fpob/poetry:latest
   stage: deploy
   script:
+    - apt update && apt install -y librhash0
     - poetry install
     - poetry run poe docs
     - mv build/docs public
