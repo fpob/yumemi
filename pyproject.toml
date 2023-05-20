@@ -6,7 +6,7 @@ readme = "README.rst"
 authors = ["Filip Pobořil <tsuki@fpob.cz>"]
 license = "MIT"
 repository = "https://github.com/fpob/yumemi"
-documentation = "https://fpob-dev.gitlab.io/yumemi/"
+documentation = "https://yumemi.readthedocs.io/"
 keywords = ["AniDB"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
