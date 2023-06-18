@@ -1,12 +1,8 @@
-import importlib.metadata
-
-
 # -- Project information -----------------------------------------------------
 
 project = 'yumemi'
 copyright = ''
 author = 'Filip Pobořil <tsuki@fpob.cz>'
-release = importlib.metadata.version(project)
 
 
 # -- General configuration ---------------------------------------------------
