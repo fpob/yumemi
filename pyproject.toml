@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "yumemi"
 version = "2.0.0"
-description = "AniDB library and simple CLI client."
+description = "AniDB API library for Python and simple CLI client"
 readme = "README.rst"
 authors = ["Filip Pobořil <tsuki@fpob.cz>"]
 license = "MIT"
