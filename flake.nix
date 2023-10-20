@@ -35,7 +35,6 @@
           rec {
             default = yumemi;
             yumemi = callPythonPackage ./nix/yumemi.nix { };
-            rhash-python = callPythonPackage ./nix/rhash.nix { };
           };
 
         checks = {

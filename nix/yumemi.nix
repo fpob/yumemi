@@ -7,8 +7,8 @@
 , poetry-core
 , pytestCheckHook
 , pytest-mock
-, rhash-python
 , pythonRelaxDepsHook
+, rhash
 }:
 
 let
@@ -32,13 +32,16 @@ buildPythonPackage rec {
     attrs
     click
     cryptography
-    rhash-python
   ];
 
   nativeCheckInputs = [
     pytestCheckHook
     pytest-mock
   ];
+
+  postPatch = ''
+    echo '_LIBNAME="${rhash}/lib/librhash.so"' > src/yumemi/_rhash/libname.py
+  '';
 
   pythonImportsCheck = [
     "yumemi"

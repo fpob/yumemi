@@ -4,9 +4,9 @@ import os
 import time
 
 import click
-import rhash
 
 from . import AnidbError, Client
+from . import _rhash as rhash
 
 
 CLIENT_NAME = 'yumemi'

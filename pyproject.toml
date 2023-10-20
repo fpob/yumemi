@@ -59,17 +59,20 @@ check_untyped_defs = true
 namespace_packages = true
 install_types = true
 non_interactive = true
+exclude = ["src/yumemi/_rhash"]
 
 
 [tool.flake8]
 max-line-length = 80
 select = "C,E,F,W,B,B950,I"
 ignore = "W503,E501"
+exclude = "src/yumemi/_rhash"
 
 
 [tool.isort]
 lines_after_imports = 2
 line_length = 88
+extend_skip = ["src/yumemi/_rhash"]
 
 
 [build-system]
