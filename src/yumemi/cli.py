@@ -31,6 +31,20 @@ def ping(ctx, param, value):
     ctx.exit(not pong)
 
 
+class DateTime(click.ParamType):
+    name = 'datetime'
+
+    def __init__(self, format):
+        super().__init__()
+        self.format = format
+
+    def convert(self, value, param, ctx):
+        try:
+            return datetime.datetime.strptime(value, self.format)
+        except ValueError:
+            self.fail(f"format must be '{self.format}'")
+
+
 def mylistadd_file_params(file):
     return (
         file,
@@ -76,12 +90,10 @@ def mylistadd_file_params(file):
 )
 @click.option(
     '-W', '--watched-date',
+    type=DateTime('%Y-%m-%d'),
     default=None,
-    metavar='DATE',
-    help=(
-        'Mark files as watched and set watched date to the specified value. '
-        'Format: YYYY-MM-DD.'
-    ),
+    metavar='YYYY-MM-DD',
+    help='Mark files as watched and set watched date to the specified value.',
 )
 @click.option(
     '-d', '--deleted',
@@ -111,15 +123,8 @@ def mylistadd_file_params(file):
 def main(username, password, watched, watched_date, deleted, edit, encrypt, jobs,
          files):
     """AniDB client for adding files to mylist."""
-    if watched_date:
+    if watched_date is not None:
         watched = True
-        try:
-            watched_date = datetime.datetime.strptime(watched_date, '%Y-%m-%d')
-        except ValueError as e:
-            raise click.BadOptionUsage(
-                'watched_date',
-                f"Date '{watched_date}' does not match format 'YYYY-MM-DD'."
-            ) from e
     elif watched:
         watched_date = datetime.datetime.now()
 
