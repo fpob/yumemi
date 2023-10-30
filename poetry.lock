@@ -804,17 +804,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)"]
 use-chardet-on-py3 = ["chardet (>=3.0.2,<6)"]
 
 [[package]]
-name = "rhash-rhash"
-version = "1.1"
-description = "Python interface for librhash"
-optional = false
-python-versions = ">=3.4"
-files = [
-    {file = "rhash-Rhash-1.1.tar.gz", hash = "sha256:9943459820a08bd276ad1d7a731debd0b8787f832c18ad3d8e9d5051dba7634d"},
-    {file = "rhash_Rhash-1.1-py3-none-any.whl", hash = "sha256:dc954942c3e5e360c151cea7538f7085e5612ce2f0375c1ac7f2b84780248a11"},
-]
-
-[[package]]
 name = "snowballstemmer"
 version = "2.2.0"
 description = "This package provides 29 stemmers for 28 languages generated from Snowball algorithms."
@@ -1065,4 +1054,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "68c1cdf2eadfd785b585af51b441cc5fc1d8ed4c7916425295bdbff116df5ab6"
+content-hash = "29be75a8ae03b1aadc6f1a011201727b1c554489de60152ec83097b48928b5ae"
