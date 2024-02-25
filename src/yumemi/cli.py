@@ -177,13 +177,6 @@ def mylistadd_file_params(file):
     help=('Format for renaming files. Template vars: '
           + ', '.join(f'${i}' for i in FILE_KEYS)),
 )
-@click.option(
-    '-j', '--jobs',
-    type=int,
-    default=1,
-    show_default=True,
-    help='Number of processes launched to calculate file hashes.',
-)
 @click.argument(
     'files',
     nargs=-1,
@@ -191,7 +184,7 @@ def mylistadd_file_params(file):
     type=click.Path(exists=True, dir_okay=False),
 )
 def main(username, password, watched, watched_date, deleted, edit, encrypt,
-         rename, rename_format, jobs, files):
+         rename, rename_format, files):
     """AniDB client for adding files to mylist."""
     if watched_date is not None:
         watched = True
@@ -210,7 +203,7 @@ def main(username, password, watched, watched_date, deleted, edit, encrypt,
         click.secho(msg, fg='red', err=True)
         raise click.Abort
 
-    mp_pool = multiprocessing.Pool(jobs)
+    mp_pool = multiprocessing.Pool(1)
 
     try:
         files_params = mp_pool.imap(mylistadd_file_params, files)
