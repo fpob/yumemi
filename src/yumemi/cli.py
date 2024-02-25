@@ -92,6 +92,8 @@ def sanitize_filename(filename):
     filename = filename.replace('/', '-')
     filename = re.sub(r'\s+', ' ', filename).strip()
     filename = re.sub(r'[\x00-\x1f]', '', filename)
+    if filename.startswith('.'):
+        filename = '_' + filename.removeprefix('.')
     return filename
 
 
