@@ -36,8 +36,17 @@
           yumemi = mkPoetryApplication {
             projectDir = self;
             preferWheels = true;
+            nativeBuildInputs = [
+              pkgs.installShellFiles
+            ];
             postPatch = ''
               echo '_LIBNAME="${pkgs.rhash}/lib/librhash.so"' > src/yumemi/_rhash/libname.py
+            '';
+            postInstall = ''
+              installShellCompletion --cmd yumemi \
+                --bash <(_YUMEMI_COMPLETE=bash_source $out/bin/yumemi) \
+                --zsh <(_YUMEMI_COMPLETE=zsh_source $out/bin/yumemi) \
+                --fish <(_YUMEMI_COMPLETE=fish_source $out/bin/yumemi)
             '';
           };
         };
