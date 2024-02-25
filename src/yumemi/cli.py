@@ -1,7 +1,10 @@
 import datetime
 import multiprocessing
 import os
+import re
+import string
 import time
+from pathlib import Path
 
 import click
 
@@ -11,6 +14,29 @@ from . import _rhash as rhash
 
 CLIENT_NAME = 'yumemi'
 CLIENT_VERSION = 4
+
+# Parameters for FILE command.
+FILE_FMASK = '78380000'
+FILE_AMASK = '30E0F0C0'
+# Data keys in FILE command response.
+FILE_KEYS = [
+    'fid', 'aid', 'eid', 'gid', 'lid', 'md5', 'sha1', 'crc32', 'ayear', 'atype',
+    'aname', 'aname_kanji', 'aname_english', 'epno', 'epname', 'epname_romaji',
+    'epname_kanji', 'gname', 'gsname',
+]
+"""
+- ``fid``, ``aid``, ``eid``, ``gid``, ``lid`` -- AniDB IDs for the file, anime,
+  episode, group, mylist entry
+- ``md5``, ``sha1``, ``crc32`` -- file hashes from the AniDB
+- ``ayear`` -- year the anime was airing
+- ``atype`` -- anime type, TV Series / Movie / Web / ...
+- ``aname``, ``aname_kanji``, ``aname_english`` -- anime title in romaji, kanji,
+  english
+- ``epno`` -- episode number
+- ``epname`` -- episode name in english, romaji, kanji
+- ``gname`` -- group that released the episode file (eg. SubsPlease)
+- ``gsname`` -- short group name
+"""
 
 
 def ping(ctx, param, value):
@@ -43,6 +69,36 @@ class DateTime(click.ParamType):
             return datetime.datetime.strptime(value, self.format)
         except ValueError:
             self.fail(f"format must be '{self.format}'")
+
+
+class TemplateString(click.ParamType):
+    name = 'template'
+
+    def __init__(self, mapping_keys):
+        super().__init__()
+        self.mapping_keys = mapping_keys
+
+    def convert(self, value, param, ctx):
+        tpl = string.Template(value)
+        # TODO `get_identifiers()` in Python >=3.11
+        try:
+            tpl.substitute(dict.fromkeys(self.mapping_keys, 'test'))
+            return tpl
+        except (KeyError, ValueError) as e:
+            self.fail(f'Template is not valid, {e}')
+
+
+def sanitize_filename(filename):
+    filename = filename.replace('/', '-')
+    filename = re.sub(r'\s+', ' ', filename).strip()
+    filename = re.sub(r'[\x00-\x1f]', '', filename)
+    return filename
+
+
+def safe_rename(old, new):
+    if new.exists():
+        raise FileExistsError(f'file "{new!s}" exists')
+    os.rename(old, new)
 
 
 def mylistadd_file_params(file):
@@ -108,6 +164,20 @@ def mylistadd_file_params(file):
     help='Edit watched state and date of files that are already in mylist.',
 )
 @click.option(
+    '-r', '--rename',
+    is_flag=True,
+    default=False,
+    help='Rename files.',
+)
+@click.option(
+    '-R', '--rename-format',
+    type=TemplateString(FILE_KEYS),
+    default='$aname - $epno',
+    show_default=True,
+    help=('Format for renaming files. Template vars: '
+          + ', '.join(f'${i}' for i in FILE_KEYS)),
+)
+@click.option(
     '-j', '--jobs',
     type=int,
     default=1,
@@ -120,8 +190,8 @@ def mylistadd_file_params(file):
     required=True,
     type=click.Path(exists=True, dir_okay=False),
 )
-def main(username, password, watched, watched_date, deleted, edit, encrypt, jobs,
-         files):
+def main(username, password, watched, watched_date, deleted, edit, encrypt,
+         rename, rename_format, jobs, files):
     """AniDB client for adding files to mylist."""
     if watched_date is not None:
         watched = True
@@ -145,7 +215,10 @@ def main(username, password, watched, watched_date, deleted, edit, encrypt, jobs
     try:
         files_params = mp_pool.imap(mylistadd_file_params, files)
         for file, file_ed2k, file_size in files_params:
-            result = client.command('MYLISTADD', {
+            click.secho(file, bold=True)
+            click.echo(f'  - ed2k={file_ed2k} size={file_size}')
+
+            mylistadd_result = client.command('MYLISTADD', {
                 'ed2k': file_ed2k,
                 'size': file_size,
                 'state': 3 if deleted else 1,  # 1 = internal storage (hdd)
@@ -154,12 +227,34 @@ def main(username, password, watched, watched_date, deleted, edit, encrypt, jobs
                 'edit': edit,
             })
 
-            if result.code in {210, 310, 311}:
-                status = click.style(' OK ', fg='green')
-            else:
-                status = click.style('FAIL', fg='red')
+            click.echo(f'  - {mylistadd_result.message.lower()}')
 
-            click.echo(f'[{status}] {result.message}: {click.format_filename(file)}')
+            if not rename or mylistadd_result.code == 320:
+                continue
+
+            file_result = client.command('FILE', {
+                'ed2k': file_ed2k,
+                'size': file_size,
+                'fmask': FILE_FMASK,
+                'amask': FILE_AMASK,
+            })
+
+            if file_result.code != 220:
+                click.echo(f'  - {file_result.message.lower()}')
+                continue
+
+            file_vars = dict(zip(FILE_KEYS, file_result.data[0]))
+
+            file_path_old = Path(file)
+            file_path_new = file_path_old.parent / sanitize_filename(
+                rename_format.substitute(file_vars) + file_path_old.suffix
+            )
+
+            try:
+                safe_rename(file_path_old, file_path_new)
+                click.echo(f'  - renamed to "{file_path_new!s}"')
+            except Exception as e:
+                click.echo(f'  - failed to rename, {e!s}')
 
     except AnidbError as e:
         click.secho(str(e), fg='red', err=True)

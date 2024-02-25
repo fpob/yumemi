@@ -1,7 +1,8 @@
 Yumemi
 ======
 
-AniDB API library for Python and simple CLI client to add files to mylist.
+AniDB API library for Python and simple CLI client to add files to mylist and
+rename them.
 
 
 Installation
