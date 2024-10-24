@@ -34,7 +34,24 @@
         packages = {
           default = self.packages.${system}.yumemi;
           yumemi = mkPoetryApplication {
-            projectDir = self;
+            projectDir =
+              let
+                fs = pkgs.lib.fileset;
+              in
+              fs.toSource {
+                root = ./.;
+                fileset = fs.intersection
+                  (fs.gitTracked ./.)
+                  (fs.unions [
+                    ./docs
+                    ./LICENSE
+                    ./poetry.lock
+                    ./pyproject.toml
+                    ./README.rst
+                    ./src
+                    ./tests
+                  ]);
+              };
             preferWheels = true;
             nativeBuildInputs = [
               pkgs.installShellFiles
