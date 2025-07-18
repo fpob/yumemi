@@ -8,6 +8,7 @@ __pycache__
 .mypy_cache
 .coverage
 .tox
+.venv
 
 # build outputs
 /build/
