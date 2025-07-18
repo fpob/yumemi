@@ -1,12 +1,10 @@
-[tool.poetry]
+[project]
 name = "yumemi"
 version = "2.1.0"
 description = "AniDB API library for Python and simple CLI client"
 readme = "README.rst"
-authors = ["Filip Pobořil <tsuki@fpob.cz>"]
+authors = [{name = "Filip Pobořil", email = "fpob@proton.me"}]
 license = "MIT"
-repository = "https://github.com/fpob/yumemi"
-documentation = "https://yumemi.readthedocs.io/"
 keywords = ["AniDB"]
 classifiers = [
   "Development Status :: 5 - Production/Stable",
@@ -15,36 +13,43 @@ classifiers = [
   "Intended Audience :: End Users/Desktop",
   "Topic :: Utilities",
 ]
-include = ["tests", "docs"]
+requires-python = ">=3.9"
+dependencies = [
+  "click",
+  "attrs",
+  "cryptography"
+]
 
-[tool.poetry.dependencies]
-python = "^3.9"
-click = "^8.1"
-attrs = "^22.1"
-cryptography = ">=41.0.4"
+[project.urls]
+Repository = "https://github.com/fpob/yumemi"
+Documentation = "https://yumemi.readthedocs.io/"
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^7.2.0"
-pytest-mock = "^3.10.0"
-mypy = "^0.991"
-pyproject-flake8 = "^6.0.0"
-flake8-bugbear = "^22.12.6"
-flake8-isort = "^5.0.3"
-isort = "^5.10.1"
-furo = "^2023.3.27"
-sphinx = "^5.3.0"
-sphinx-click = "^4.4.0"
-poethepoet = "^0.16.5"
-
-[tool.poetry.scripts]
+[project.scripts]
 yumemi = "yumemi.cli:main"
 
 
-[tool.poe.tasks]
-pytest = "pytest"
-mypy = "mypy src"
-flake8 = "pflake8 src tests"
-isort = "isort src tests"
+[tool.hatch.envs.default]
+installer = "uv"
+dependencies = [
+  "pytest",
+  "pytest-mock",
+  "mypy",
+  "pyproject-flake8",
+  "flake8-bugbear",
+  "flake8-isort",
+  "isort",
+  "furo",
+  "sphinx",
+  "sphinx-click",
+]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest"
+check = [
+  "pflake8 src tests",
+  "mypy src",
+]
+fmt = "isort src tests"
 docs = "sphinx-build -a docs build/docs"
 
 
@@ -58,7 +63,10 @@ check_untyped_defs = true
 namespace_packages = true
 install_types = true
 non_interactive = true
-exclude = ["src/yumemi/_rhash"]
+
+[[tool.mypy.overrides]]
+module = "yumemi._rhash.*"
+ignore_errors = true
 
 
 [tool.flake8]
@@ -75,5 +83,5 @@ extend_skip = ["src/yumemi/_rhash"]
 
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

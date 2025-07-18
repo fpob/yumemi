@@ -6,66 +6,78 @@
       url = "github:edolstra/flake-compat";
       flake = false;
     };
-    poetry2nix = {
-      url = "github:nix-community/poetry2nix";
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
 
-  outputs = { self, nixpkgs, flake-utils, poetry2nix, ... }:
+  outputs = { self, nixpkgs, flake-utils, pyproject-nix, ... }:
     flake-utils.lib.eachDefaultSystem (system:
       let
+        inherit (nixpkgs) lib;
         pkgs = nixpkgs.legacyPackages.${system};
-        inherit (poetry2nix.lib.mkPoetry2Nix { inherit pkgs; }) mkPoetryApplication;
+
+        python = pkgs.python3;
+
       in
       {
         devShells.default = pkgs.mkShell {
-          buildInputs = [
-            pkgs.poetry
-            pkgs.python3
+          packages = [
+            pkgs.hatch
+            pkgs.uv
+            python
           ];
-          LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
-            pkgs.rhash
-          ];
+          env = {
+            LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [
+              pkgs.rhash
+            ];
+          };
         };
 
         formatter = pkgs.nixpkgs-fmt;
 
         packages = {
           default = self.packages.${system}.yumemi;
-          yumemi = mkPoetryApplication {
-            projectDir =
-              let
-                fs = pkgs.lib.fileset;
-              in
-              fs.toSource {
-                root = ./.;
-                fileset = fs.intersection
-                  (fs.gitTracked ./.)
-                  (fs.unions [
-                    ./docs
-                    ./LICENSE
-                    ./poetry.lock
-                    ./pyproject.toml
-                    ./README.rst
-                    ./src
-                    ./tests
-                  ]);
+          yumemi =
+            let
+              project = pyproject-nix.lib.project.loadPyproject {
+                projectRoot =
+                  let
+                    fs = pkgs.lib.fileset;
+                  in
+                  fs.toSource {
+                    root = ./.;
+                    fileset = fs.intersection
+                      (fs.gitTracked ./.)
+                      (fs.unions [
+                        ./pyproject.toml
+                        ./README.rst
+                        ./src
+                        ./tests
+                      ]);
+                  };
               };
-            preferWheels = true;
-            nativeBuildInputs = [
-              pkgs.installShellFiles
-            ];
-            postPatch = ''
-              echo '_LIBNAME="${pkgs.rhash}/lib/librhash.so"' > src/yumemi/_rhash/libname.py
-            '';
-            postInstall = ''
-              installShellCompletion --cmd yumemi \
-                --bash <(_YUMEMI_COMPLETE=bash_source $out/bin/yumemi) \
-                --zsh <(_YUMEMI_COMPLETE=zsh_source $out/bin/yumemi) \
-                --fish <(_YUMEMI_COMPLETE=fish_source $out/bin/yumemi)
-            '';
-          };
+              attrs = project.renderers.buildPythonPackage { inherit python; } // {
+                nativeBuildInputs = [
+                  pkgs.installShellFiles
+                ];
+                postPatch = ''
+                  echo '_LIBNAME="${pkgs.rhash}/lib/librhash.so"' > src/yumemi/_rhash/libname.py
+                '';
+                postInstall = ''
+                  installShellCompletion --cmd yumemi \
+                    --bash <(_YUMEMI_COMPLETE=bash_source $out/bin/yumemi) \
+                    --zsh <(_YUMEMI_COMPLETE=zsh_source $out/bin/yumemi) \
+                    --fish <(_YUMEMI_COMPLETE=fish_source $out/bin/yumemi)
+                '';
+                nativeCheckInputs = [
+                  python.pkgs.pytestCheckHook
+                  python.pkgs.pytest-mock
+                ];
+              };
+            in
+            python.pkgs.buildPythonPackage attrs;
         };
 
         checks = {
