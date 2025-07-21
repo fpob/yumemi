@@ -2,7 +2,7 @@
 
 project = 'yumemi'
 copyright = ''
-author = 'Filip Pobořil <tsuki@fpob.cz>'
+author = 'Filip Pobořil <dev@fpob.cz>'
 
 
 # -- General configuration ---------------------------------------------------
